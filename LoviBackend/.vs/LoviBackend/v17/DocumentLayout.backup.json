@@ -1,0 +1,54 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\david\\Documents\\Visual Studio 2022\\Projects\\LoviBackend\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{2D4509BB-4D8D-411E-8E0A-4A8F07B110D7}|LoviBackend\\LoviBackend.csproj|c:\\users\\david\\documents\\visual studio 2022\\projects\\lovibackend\\lovibackend\\controllers\\podcastscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D4509BB-4D8D-411E-8E0A-4A8F07B110D7}|LoviBackend\\LoviBackend.csproj|solutionrelative:lovibackend\\controllers\\podcastscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D4509BB-4D8D-411E-8E0A-4A8F07B110D7}|LoviBackend\\LoviBackend.csproj|c:\\users\\david\\documents\\visual studio 2022\\projects\\lovibackend\\lovibackend\\services\\tokenservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D4509BB-4D8D-411E-8E0A-4A8F07B110D7}|LoviBackend\\LoviBackend.csproj|solutionrelative:lovibackend\\services\\tokenservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "TokenService.cs",
+              "DocumentMoniker": "C:\\Users\\david\\Documents\\Visual Studio 2022\\Projects\\LoviBackend\\LoviBackend\\Services\\TokenService.cs",
+              "RelativeDocumentMoniker": "LoviBackend\\Services\\TokenService.cs",
+              "ToolTip": "C:\\Users\\david\\Documents\\Visual Studio 2022\\Projects\\LoviBackend\\LoviBackend\\Services\\TokenService.cs",
+              "RelativeToolTip": "LoviBackend\\Services\\TokenService.cs",
+              "ViewState": "AgIAAAoAAAAAAAAAAAAowBwAAAA1AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-12T16:32:49.407Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "PodcastsController.cs",
+              "DocumentMoniker": "C:\\Users\\david\\Documents\\Visual Studio 2022\\Projects\\LoviBackend\\LoviBackend\\Controllers\\PodcastsController.cs",
+              "RelativeDocumentMoniker": "LoviBackend\\Controllers\\PodcastsController.cs",
+              "ToolTip": "C:\\Users\\david\\Documents\\Visual Studio 2022\\Projects\\LoviBackend\\LoviBackend\\Controllers\\PodcastsController.cs",
+              "RelativeToolTip": "LoviBackend\\Controllers\\PodcastsController.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAAABQAAAAcAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-10T23:50:10.216Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

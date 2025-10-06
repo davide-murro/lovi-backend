@@ -53,5 +53,5 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 
-# Custom
-.vs/
+# Visual Studio
+.vs/*

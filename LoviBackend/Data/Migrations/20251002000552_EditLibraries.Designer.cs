@@ -4,6 +4,7 @@ using LoviBackend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LoviBackend.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251002000552_EditLibraries")]
+    partial class EditLibraries
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -124,12 +127,6 @@ namespace LoviBackend.Data.Migrations
 
             modelBuilder.Entity("LoviBackend.Models.DbSets.Library", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
                     b.Property<int?>("AudioBookId")
                         .HasColumnType("int");
 
@@ -143,21 +140,15 @@ namespace LoviBackend.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
-
                     b.HasIndex("AudioBookId");
 
                     b.HasIndex("PodcastEpisodeId");
 
                     b.HasIndex("PodcastId");
 
-                    b.HasIndex("UserId", "AudioBookId")
+                    b.HasIndex("UserId", "PodcastId", "PodcastEpisodeId", "AudioBookId")
                         .IsUnique()
-                        .HasFilter("[AudioBookId] IS NOT NULL");
-
-                    b.HasIndex("UserId", "PodcastId", "PodcastEpisodeId")
-                        .IsUnique()
-                        .HasFilter("[PodcastId] IS NOT NULL AND [PodcastEpisodeId] IS NOT NULL");
+                        .HasFilter("[PodcastId] IS NOT NULL AND [PodcastEpisodeId] IS NOT NULL AND [AudioBookId] IS NOT NULL");
 
                     b.ToTable("Libraries");
                 });

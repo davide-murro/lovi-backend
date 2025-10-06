@@ -4,6 +4,7 @@ using LoviBackend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LoviBackend.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251002002557_EditLibraries2")]
+    partial class EditLibraries2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -151,13 +154,9 @@ namespace LoviBackend.Data.Migrations
 
                     b.HasIndex("PodcastId");
 
-                    b.HasIndex("UserId", "AudioBookId")
+                    b.HasIndex("UserId", "PodcastId", "PodcastEpisodeId", "AudioBookId")
                         .IsUnique()
-                        .HasFilter("[AudioBookId] IS NOT NULL");
-
-                    b.HasIndex("UserId", "PodcastId", "PodcastEpisodeId")
-                        .IsUnique()
-                        .HasFilter("[PodcastId] IS NOT NULL AND [PodcastEpisodeId] IS NOT NULL");
+                        .HasFilter("[PodcastId] IS NOT NULL AND [PodcastEpisodeId] IS NOT NULL AND [AudioBookId] IS NOT NULL");
 
                     b.ToTable("Libraries");
                 });

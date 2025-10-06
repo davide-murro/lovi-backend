@@ -1,5 +1,5 @@
 using LoviBackend.Data;
-using LoviBackend.Models;
+using LoviBackend.Models.DbSets;
 using LoviBackend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -61,9 +61,16 @@ builder.Services
         };
     });
 
+// set api lower case
+builder.Services.Configure<RouteOptions>(options =>
+{
+    options.LowercaseUrls = true;
+});
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 

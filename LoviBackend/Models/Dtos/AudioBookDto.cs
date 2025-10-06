@@ -2,7 +2,7 @@
 
 namespace LoviBackend.Models.Dtos
 {
-    public class PodcastDto
+    public class AudioBookDto
     {
         public int Id { get; set; }
 
@@ -13,7 +13,7 @@ namespace LoviBackend.Models.Dtos
 
         public string? Description { get; set; }
 
-        public ICollection<PodcastEpisodeDto> Episodes { get; set; } = null!;
+        public string AudioPath { get; set; } = null!;
 
     }
 }

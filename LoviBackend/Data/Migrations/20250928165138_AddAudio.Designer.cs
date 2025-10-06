@@ -4,6 +4,7 @@ using LoviBackend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LoviBackend.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250928165138_AddAudio")]
+    partial class AddAudio
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -91,77 +94,6 @@ namespace LoviBackend.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("LoviBackend.Models.DbSets.AudioBook", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AudioPath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CoverImagePath")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("AudioBooks");
-                });
-
-            modelBuilder.Entity("LoviBackend.Models.DbSets.Library", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("AudioBookId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("PodcastEpisodeId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("PodcastId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AudioBookId");
-
-                    b.HasIndex("PodcastEpisodeId");
-
-                    b.HasIndex("PodcastId");
-
-                    b.HasIndex("UserId", "AudioBookId")
-                        .IsUnique()
-                        .HasFilter("[AudioBookId] IS NOT NULL");
-
-                    b.HasIndex("UserId", "PodcastId", "PodcastEpisodeId")
-                        .IsUnique()
-                        .HasFilter("[PodcastId] IS NOT NULL AND [PodcastEpisodeId] IS NOT NULL");
-
-                    b.ToTable("Libraries");
-                });
-
             modelBuilder.Entity("LoviBackend.Models.DbSets.Podcast", b =>
                 {
                     b.Property<int>("Id")
@@ -198,7 +130,6 @@ namespace LoviBackend.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AudioPath")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CoverImagePath")
@@ -387,38 +318,6 @@ namespace LoviBackend.Data.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("LoviBackend.Models.DbSets.Library", b =>
-                {
-                    b.HasOne("LoviBackend.Models.DbSets.AudioBook", "AudioBook")
-                        .WithMany()
-                        .HasForeignKey("AudioBookId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("LoviBackend.Models.DbSets.PodcastEpisode", "PodcastEpisode")
-                        .WithMany()
-                        .HasForeignKey("PodcastEpisodeId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("LoviBackend.Models.DbSets.Podcast", "Podcast")
-                        .WithMany()
-                        .HasForeignKey("PodcastId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("LoviBackend.Models.DbSets.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AudioBook");
-
-                    b.Navigation("Podcast");
-
-                    b.Navigation("PodcastEpisode");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("LoviBackend.Models.DbSets.PodcastEpisode", b =>

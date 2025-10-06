@@ -5,9 +5,9 @@ namespace LoviBackend.Models.Dtos
     public class TokenDto
     {
         [Required]
-        public string AccessToken { get; set; } = string.Empty;
+        public string AccessToken { get; set; } = null!;
 
         [Required]
-        public string RefreshToken { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = null!;
     }
 }

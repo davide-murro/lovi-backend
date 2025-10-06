@@ -1,5 +1,5 @@
 ﻿using LoviBackend.Data;
-using LoviBackend.Models;
+using LoviBackend.Models.DbSets;
 using LoviBackend.Models.Dtos;
 using LoviBackend.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -67,6 +67,7 @@ namespace LoviBackend.Controllers
             List<Claim> authClaims = [
                 new (ClaimTypes.Name, user.UserName!),
                 new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),  // unique id for token
+                new (ClaimTypes.NameIdentifier, user.Id)    // Add the user's ID to the claims
             ];
 
             // adding roles to the claims. So that we can get the user role from the token.

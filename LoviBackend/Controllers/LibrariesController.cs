@@ -57,7 +57,9 @@ namespace LoviBackend.Controllers
                 {
                     Id = l.AudioBook.Id,
                     Name = l.AudioBook.Name,
-                    Description = l.AudioBook.Description
+                    CoverImageUrl = l.AudioBook.CoverImagePath != null ? Url.Action(nameof(AudioBooksController.GetCoverImage), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme) : null,
+                    Description = l.AudioBook.Description,
+                    AudioUrl = Url.Action(nameof(AudioBooksController.GetAudio), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme)!,
                 } : null
             }).ToList();
 
@@ -111,7 +113,9 @@ namespace LoviBackend.Controllers
                 {
                     Id = l.AudioBook.Id,
                     Name = l.AudioBook.Name,
-                    Description = l.AudioBook.Description
+                    CoverImageUrl = l.AudioBook.CoverImagePath != null ? Url.Action(nameof(AudioBooksController.GetCoverImage), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme) : null,
+                    Description = l.AudioBook.Description,
+                    AudioUrl = Url.Action(nameof(AudioBooksController.GetAudio), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme)!,
                 } : null
             }).ToList();
 

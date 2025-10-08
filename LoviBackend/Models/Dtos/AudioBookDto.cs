@@ -13,7 +13,7 @@ namespace LoviBackend.Models.Dtos
 
         public string? Description { get; set; }
 
-        public string AudioPath { get; set; } = null!;
+        public string AudioUrl { get; set; } = null!;
 
     }
 }

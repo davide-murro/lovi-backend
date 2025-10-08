@@ -5,7 +5,6 @@ using LoviBackend.Models.Dtos.Pagination;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace LoviBackend.Controllers
 {
@@ -261,7 +260,11 @@ namespace LoviBackend.Controllers
             if (podcastEpisode == null || string.IsNullOrEmpty(podcastEpisode.CoverImagePath))
                 return NotFound();
 
-            var filePath = Path.Combine(_hostingEnvironment.ContentRootPath, _configuration["UploadsPath"]!, podcastEpisode.CoverImagePath);
+            var filePath = Path.Combine(
+                _hostingEnvironment.ContentRootPath, 
+                _configuration["UploadsPath"]!, 
+                podcastEpisode.CoverImagePath
+            );
             if (!System.IO.File.Exists(filePath))
                 return NotFound();
 

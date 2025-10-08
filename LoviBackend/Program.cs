@@ -3,6 +3,7 @@ using LoviBackend.Models.DbSets;
 using LoviBackend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -61,15 +62,14 @@ builder.Services
         };
     });
 
-// set api lower case
-builder.Services.Configure<RouteOptions>(options =>
-{
-    options.LowercaseUrls = true;
-});
-
 builder.Services.AddAuthorization();
 
-builder.Services.AddControllers();
+// make api kebab-case
+builder.Services.AddControllers(options =>
+{
+    // Inline implementation of IOutboundParameterTransformer
+    options.Conventions.Add(new RouteTokenTransformerConvention(new InlineKebabCaseTransformer()));
+});
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

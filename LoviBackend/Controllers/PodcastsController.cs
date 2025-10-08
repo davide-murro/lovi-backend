@@ -5,6 +5,7 @@ using LoviBackend.Models.Dtos.Pagination;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace LoviBackend.Controllers
 {
@@ -161,16 +162,11 @@ namespace LoviBackend.Controllers
             var podcastsQuery = _context.Podcasts.AsNoTracking();
 
             // Sorting
-            if (!string.IsNullOrEmpty(query.SortBy))
-            {
-                var property = typeof(Podcast).GetProperty(query.SortBy);
-                if (property != null)
-                {
-                    podcastsQuery = query.SortOrder.ToLower() == "desc"
-                        ? podcastsQuery.OrderByDescending(e => EF.Property<object>(e, property.Name))
-                        : podcastsQuery.OrderBy(e => EF.Property<object>(e, property.Name));
-                }
-            }
+            if (string.IsNullOrEmpty(query.SortBy)) query.SortBy = "Id";
+            var property = typeof(Podcast).GetProperty(query.SortBy, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)!;
+            podcastsQuery = query.SortOrder.ToLower() == "desc"
+                ? podcastsQuery.OrderByDescending(e => EF.Property<object>(e, property.Name))
+                : podcastsQuery.OrderBy(e => EF.Property<object>(e, property.Name));
 
             // Total count (before pagination)
             var totalCount = await podcastsQuery.CountAsync();
@@ -261,8 +257,8 @@ namespace LoviBackend.Controllers
                 return NotFound();
 
             var filePath = Path.Combine(
-                _hostingEnvironment.ContentRootPath, 
-                _configuration["UploadsPath"]!, 
+                _hostingEnvironment.ContentRootPath,
+                _configuration["UploadsPath"]!,
                 podcastEpisode.CoverImagePath
             );
             if (!System.IO.File.Exists(filePath))
@@ -290,7 +286,7 @@ namespace LoviBackend.Controllers
             if (!System.IO.File.Exists(filePath))
                 return NotFound();
 
-            var contentType = "audio/mpeg"; 
+            var contentType = "audio/mpeg";
             var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
 
             return File(fileStream, contentType, enableRangeProcessing: true);

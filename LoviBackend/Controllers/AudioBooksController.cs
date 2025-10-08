@@ -5,6 +5,7 @@ using LoviBackend.Models.Dtos.Pagination;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace LoviBackend.Controllers
 {
@@ -152,16 +153,11 @@ namespace LoviBackend.Controllers
             var audioBooksQuery = _context.AudioBooks.AsNoTracking();
 
             // Sorting
-            if (!string.IsNullOrEmpty(query.SortBy))
-            {
-                var property = typeof(AudioBook).GetProperty(query.SortBy);
-                if (property != null)
-                {
-                    audioBooksQuery = query.SortOrder.ToLower() == "desc"
-                        ? audioBooksQuery.OrderByDescending(e => EF.Property<object>(e, property.Name))
-                        : audioBooksQuery.OrderBy(e => EF.Property<object>(e, property.Name));
-                }
-            }
+            if (string.IsNullOrEmpty(query.SortBy)) query.SortBy = "Id";
+            var property = typeof(AudioBook).GetProperty(query.SortBy, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)!;
+            audioBooksQuery = query.SortOrder.ToLower() == "desc"
+                ? audioBooksQuery.OrderByDescending(e => EF.Property<object>(e, property.Name))
+                : audioBooksQuery.OrderBy(e => EF.Property<object>(e, property.Name));
 
             // Total count (before pagination)
             var totalCount = await audioBooksQuery.CountAsync();

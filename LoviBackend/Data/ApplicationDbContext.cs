@@ -10,11 +10,11 @@ namespace LoviBackend.Data
         { }
 
         public DbSet<TokenInfo> TokenInfos { get; set; }
+        public DbSet<AudioBook> AudioBooks { get; set; } 
         public DbSet<Podcast> Podcasts { get; set; }
         public DbSet<PodcastEpisode> PodcastEpisodes { get; set; }
         public DbSet<Library> Libraries { get; set; }
-
-        public DbSet<AudioBook> AudioBooks { get; set; } 
+        public DbSet<Creator> Creators { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

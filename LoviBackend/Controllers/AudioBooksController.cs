@@ -31,12 +31,22 @@ namespace LoviBackend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AudioBookDto>>> Get()
         {
-            var audioBooks = await _context.AudioBooks.ToListAsync();
+            var audioBooks = await _context.AudioBooks
+                .Include(ab => ab.Readers)
+                    .ThenInclude(r => r.Creator)
+                .ToListAsync();
 
             var audioBookDtos = audioBooks.Select(audioBook => new AudioBookDto
             {
                 Id = audioBook.Id,
                 Name = audioBook.Name,
+                Readers = audioBook.Readers.Select(v => new CreatorDto
+                {
+                    Id = v.Creator.Id,
+                    Nickname = v.Creator.Nickname,
+                    Name = v.Creator.Name,
+                    Surname = v.Creator.Surname
+                }).ToList()
             }).ToList();
 
             return Ok(audioBookDtos);
@@ -46,7 +56,10 @@ namespace LoviBackend.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<AudioBookDto>> Get(int id)
         {
-            var audioBook = await _context.AudioBooks.FindAsync(id);
+            var audioBook = await _context.AudioBooks
+                .Include(ab => ab.Readers)
+                    .ThenInclude(r => r.Creator)
+                .FirstOrDefaultAsync(ab => ab.Id == id);
 
             if (audioBook == null)
             {
@@ -60,6 +73,13 @@ namespace LoviBackend.Controllers
                 Description = audioBook.Description,
                 CoverImageUrl = audioBook.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "AudioBooks", new { id = audioBook.Id }, Request.Scheme) : null,
                 AudioUrl = Url.Action(nameof(GetAudio), "AudioBooks", new { id = audioBook.Id }, Request.Scheme)!,
+                Readers = audioBook.Readers.Select(v => new CreatorDto
+                {
+                    Id = v.Creator.Id,
+                    Nickname = v.Creator.Nickname,
+                    Name = v.Creator.Name,
+                    Surname = v.Creator.Surname
+                }).ToList()
             };
 
             return audioBookDto;
@@ -110,7 +130,7 @@ namespace LoviBackend.Controllers
             _context.AudioBooks.Add(audioBook);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetAudioBook", new { id = audioBook.Id }, audioBook);
+            return CreatedAtAction(nameof(Get), new { id = audioBook.Id }, audioBook);
         }
 
         // DELETE: api/audio-books/5
@@ -150,7 +170,10 @@ namespace LoviBackend.Controllers
         public async Task<ActionResult<PagedResult<AudioBookDto>>> GetPaged([FromQuery] PagedQuery query)
         {
             // Base query from EF
-            var audioBooksQuery = _context.AudioBooks.AsNoTracking();
+            var audioBooksQuery = _context.AudioBooks
+                .Include(ab => ab.Readers)
+                    .ThenInclude(r => r.Creator)
+                .AsNoTracking();
 
             // Sorting
             if (string.IsNullOrEmpty(query.SortBy)) query.SortBy = "Id";
@@ -161,6 +184,7 @@ namespace LoviBackend.Controllers
 
             // Total count (before pagination)
             var totalCount = await audioBooksQuery.CountAsync();
+            var aa = await audioBooksQuery.ToListAsync();
 
             // Apply pagination and project to DTO
             var items = await audioBooksQuery
@@ -172,6 +196,13 @@ namespace LoviBackend.Controllers
                     Name = ab.Name,
                     CoverImageUrl = ab.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "AudioBooks", new { id = ab.Id }, Request.Scheme) : null,
                     AudioUrl = Url.Action(nameof(GetAudio), "AudioBooks", new { id = ab.Id }, Request.Scheme)!,
+                    Readers = ab.Readers.Select(v => new CreatorDto
+                    {
+                        Id = v.Creator.Id,
+                        Nickname = v.Creator.Nickname,
+                        Name = v.Creator.Name,
+                        Surname = v.Creator.Surname
+                    }).ToList()
                 })
                 .ToListAsync();
 

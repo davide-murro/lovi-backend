@@ -10,6 +10,7 @@ namespace LoviBackend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class LibrariesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -20,15 +21,21 @@ namespace LoviBackend.Controllers
         }
 
         // GET: api/libraries
-        [Authorize(Roles = "Admin")]
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<LibraryDto>>> Get()
         {
             var libraries = await _context.Libraries
                 .Include(l => l.User)
                 .Include(l => l.Podcast)
+                    .ThenInclude(p => p!.Voicers)
+                        .ThenInclude(v => v.Creator)
                 .Include(l => l.PodcastEpisode)
+                    .ThenInclude(pe => pe!.Voicers)
+                        .ThenInclude(v => v.Creator)
                 .Include(l => l.AudioBook)
+                    .ThenInclude(ab => ab!.Readers)
+                        .ThenInclude(r => r.Creator)
                 .ToListAsync();
 
             var libraryDtos = libraries.Select(l => new LibraryDto
@@ -44,14 +51,28 @@ namespace LoviBackend.Controllers
                     Id = l.Podcast.Id,
                     Name = l.Podcast.Name,
                     CoverImageUrl = l.Podcast.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetCoverImage), "Podcasts", new { id = l.Podcast.Id }, Request.Scheme) : null,
-                    Description = l.Podcast.Description
+                    Description = l.Podcast.Description,
+                    Voicers = l.Podcast.Voicers.Select(v => new CreatorDto
+                    {
+                        Id = v.Creator.Id,
+                        Nickname = v.Creator.Nickname,
+                        Name = v.Creator.Name,
+                        Surname = v.Creator.Surname
+                    }).ToList()
                 } : null,
                 PodcastEpisode = l.PodcastEpisode != null ? new PodcastEpisodeDto
                 {
                     Id = l.PodcastEpisode.Id,
                     Name = l.PodcastEpisode.Name,
                     CoverImageUrl = l.PodcastEpisode.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetEpisodeCoverImage), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme) : null,
-                    Description = l.PodcastEpisode.Description
+                    Description = l.PodcastEpisode.Description,
+                    Voicers = l.PodcastEpisode.Voicers.Select(v => new CreatorDto
+                    {
+                        Id = v.Creator.Id,
+                        Nickname = v.Creator.Nickname,
+                        Name = v.Creator.Name,
+                        Surname = v.Creator.Surname
+                    }).ToList()
                 } : null,
                 AudioBook = l.AudioBook != null ? new AudioBookDto
                 {
@@ -60,6 +81,13 @@ namespace LoviBackend.Controllers
                     CoverImageUrl = l.AudioBook.CoverImagePath != null ? Url.Action(nameof(AudioBooksController.GetCoverImage), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme) : null,
                     Description = l.AudioBook.Description,
                     AudioUrl = Url.Action(nameof(AudioBooksController.GetAudio), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme)!,
+                    Readers = l.AudioBook.Readers.Select(r => new CreatorDto
+                    {
+                        Id = r.Creator.Id,
+                        Nickname = r.Creator.Nickname,
+                        Name = r.Creator.Name,
+                        Surname = r.Creator.Surname
+                    }).ToList()
                 } : null
             }).ToList();
 
@@ -67,7 +95,6 @@ namespace LoviBackend.Controllers
         }
 
         // GET: api/libraries/me
-        [Authorize]
         [HttpGet("me")]
         public async Task<ActionResult<IEnumerable<LibraryDto>>> GetMe()
         {
@@ -81,8 +108,14 @@ namespace LoviBackend.Controllers
             var libraries = await _context.Libraries
                 .Include(l => l.User)
                 .Include(l => l.Podcast)
+                    .ThenInclude(p => p!.Voicers)
+                        .ThenInclude(v => v.Creator)
                 .Include(l => l.PodcastEpisode)
+                    .ThenInclude(pe => pe!.Voicers)
+                        .ThenInclude(v => v.Creator)
                 .Include(l => l.AudioBook)
+                    .ThenInclude(ab => ab!.Readers)
+                        .ThenInclude(r => r.Creator)
                 .Where(l => l.UserId == userId)
                 .ToListAsync();
 
@@ -99,7 +132,14 @@ namespace LoviBackend.Controllers
                     Id = l.Podcast.Id,
                     Name = l.Podcast.Name,
                     CoverImageUrl = l.Podcast.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetCoverImage), "Podcasts", new { id = l.Podcast.Id }, Request.Scheme) : null,
-                    Description = l.Podcast.Description
+                    Description = l.Podcast.Description,
+                    Voicers = l.Podcast.Voicers.Select(v => new CreatorDto
+                    {
+                        Id = v.Creator.Id,
+                        Nickname = v.Creator.Nickname,
+                        Name = v.Creator.Name,
+                        Surname = v.Creator.Surname
+                    }).ToList()
                 } : null,
                 PodcastEpisode = l.PodcastEpisode != null ? new PodcastEpisodeDto
                 {
@@ -108,6 +148,13 @@ namespace LoviBackend.Controllers
                     CoverImageUrl = l.PodcastEpisode.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetEpisodeCoverImage), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme) : null,
                     Description = l.PodcastEpisode.Description,
                     AudioUrl = Url.Action(nameof(PodcastsController.GetEpisodeAudio), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme)!,
+                    Voicers = l.PodcastEpisode.Voicers.Select(v => new CreatorDto
+                    {
+                        Id = v.Creator.Id,
+                        Nickname = v.Creator.Nickname,
+                        Name = v.Creator.Name,
+                        Surname = v.Creator.Surname
+                    }).ToList()
                 } : null,
                 AudioBook = l.AudioBook != null ? new AudioBookDto
                 {
@@ -116,6 +163,13 @@ namespace LoviBackend.Controllers
                     CoverImageUrl = l.AudioBook.CoverImagePath != null ? Url.Action(nameof(AudioBooksController.GetCoverImage), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme) : null,
                     Description = l.AudioBook.Description,
                     AudioUrl = Url.Action(nameof(AudioBooksController.GetAudio), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme)!,
+                    Readers = l.AudioBook.Readers.Select(r => new CreatorDto
+                    {
+                        Id = r.Creator.Id,
+                        Nickname = r.Creator.Nickname,
+                        Name = r.Creator.Name,
+                        Surname = r.Creator.Surname
+                    }).ToList()
                 } : null
             }).ToList();
 
@@ -123,7 +177,6 @@ namespace LoviBackend.Controllers
         }
 
         // POST: api/libraries/me
-        [Authorize]
         [HttpPost("me")]
         public async Task<ActionResult<LibraryDto>> CreateMe(ManageLibraryDto manageLibraryDto)
         {
@@ -148,7 +201,6 @@ namespace LoviBackend.Controllers
         }
 
         // POST: api/libraries/me/list
-        [Authorize]
         [HttpPost("me/list")]
         public async Task<ActionResult<IEnumerable<LibraryDto>>> CreateMe([FromBody] List<ManageLibraryDto> manageLibraryDtos)
         {
@@ -179,7 +231,6 @@ namespace LoviBackend.Controllers
         }
 
         // DELETE: api/libraries/me
-        [Authorize]
         [HttpDelete("me")]
         public async Task<IActionResult> DeleteMe()
         {
@@ -198,7 +249,6 @@ namespace LoviBackend.Controllers
         }
 
         // DELETE: api/libraries/me/2
-        [Authorize]
         [HttpDelete("me/{id}")]
         public async Task<IActionResult> DeleteMe(int id)
         {
@@ -223,7 +273,6 @@ namespace LoviBackend.Controllers
         }
 
         // DELETE: api/libraries/me/list
-        [Authorize]
         [HttpDelete("me/list")]
         public async Task<IActionResult> DeleteMe([FromBody] List<int> ids)
         {

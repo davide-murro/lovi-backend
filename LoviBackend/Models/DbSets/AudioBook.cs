@@ -6,6 +6,8 @@ namespace LoviBackend.Models.DbSets
     {
         [Key]
         public int Id { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
 
         [Required]
         [MaxLength(256)]
@@ -16,5 +18,7 @@ namespace LoviBackend.Models.DbSets
         public string? Description { get; set; }
 
         public string AudioPath { get; set; } = null!;
+
+        public ICollection<AudioBookReader> Readers { get; set; } = new List<AudioBookReader>();
     }
 }

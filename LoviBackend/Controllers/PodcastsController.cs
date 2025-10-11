@@ -31,12 +31,22 @@ namespace LoviBackend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<PodcastDto>>> Get()
         {
-            var podcasts = await _context.Podcasts.ToListAsync();
+            var podcasts = await _context.Podcasts
+                .Include(p => p.Voicers)
+                    .ThenInclude(v => v.Creator)
+                .ToListAsync();
 
             var podcastDtos = podcasts.Select(podcast => new PodcastDto
             {
                 Id = podcast.Id,
                 Name = podcast.Name,
+                Voicers = podcast.Voicers.Select(v => new CreatorDto
+                {
+                    Id = v.Creator.Id,
+                    Nickname = v.Creator.Nickname,
+                    Name = v.Creator.Name,
+                    Surname = v.Creator.Surname
+                }).ToList()
             }).ToList();
 
             return Ok(podcastDtos);
@@ -46,7 +56,13 @@ namespace LoviBackend.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<PodcastDto>> Get(int id)
         {
-            var podcast = await _context.Podcasts.Include(p => p.Episodes).FirstOrDefaultAsync(p => p.Id == id);
+            var podcast = await _context.Podcasts
+                .Include(p => p.Episodes)
+                    .ThenInclude(p => p.Voicers)
+                        .ThenInclude(v => v.Creator)
+                .Include(p => p.Voicers)
+                    .ThenInclude(v => v.Creator)
+                .FirstOrDefaultAsync(p => p.Id == id);
 
             if (podcast == null)
             {
@@ -67,6 +83,20 @@ namespace LoviBackend.Controllers
                     Description = pe.Description,
                     CoverImageUrl = pe.CoverImagePath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
                     AudioUrl = Url.Action(nameof(GetEpisodeAudio), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme)!,
+                    Voicers = pe.Voicers.Select(v => new CreatorDto
+                    {
+                        Id = v.Creator.Id,
+                        Nickname = v.Creator.Nickname,
+                        Name = v.Creator.Name,
+                        Surname = v.Creator.Surname
+                    }).ToList()
+                }).ToList(),
+                Voicers = podcast.Voicers.Select(v => new CreatorDto
+                {
+                    Id = v.Creator.Id,
+                    Nickname = v.Creator.Nickname,
+                    Name = v.Creator.Name,
+                    Surname = v.Creator.Surname
                 }).ToList(),
             };
 
@@ -159,7 +189,10 @@ namespace LoviBackend.Controllers
         public async Task<ActionResult<PagedResult<PodcastDto>>> GetPaged([FromQuery] PagedQuery query)
         {
             // Base query from EF
-            var podcastsQuery = _context.Podcasts.AsNoTracking();
+            var podcastsQuery = _context.Podcasts
+                .Include(p => p.Voicers)
+                    .ThenInclude(v => v.Creator)
+                .AsNoTracking();
 
             // Sorting
             if (string.IsNullOrEmpty(query.SortBy)) query.SortBy = "Id";
@@ -180,6 +213,13 @@ namespace LoviBackend.Controllers
                     Id = p.Id,
                     Name = p.Name,
                     CoverImageUrl = p.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = p.Id }, Request.Scheme) : null,
+                    Voicers = p.Voicers.Select(v => new CreatorDto
+                    {
+                        Id = v.Creator.Id,
+                        Nickname = v.Creator.Nickname,
+                        Name = v.Creator.Name,
+                        Surname = v.Creator.Surname
+                    }).ToList()
                 })
                 .ToListAsync();
 
@@ -216,7 +256,17 @@ namespace LoviBackend.Controllers
         [HttpGet("{id}/episodes/{episodeId}")]
         public async Task<ActionResult<PodcastEpisodeDto>> GetEpisode(int id, int episodeId)
         {
-            var podcastEpisode = await _context.PodcastEpisodes.Include(pe => pe.Podcast).ThenInclude(p => p.Episodes).FirstOrDefaultAsync(p => p.Id == episodeId);
+            var podcastEpisode = await _context.PodcastEpisodes
+                .Include(pe => pe.Podcast)
+                    .ThenInclude(p => p.Voicers)
+                        .ThenInclude(v => v.Creator)
+                .Include(pe => pe.Podcast)
+                    .ThenInclude(p => p.Episodes)
+                        .ThenInclude(pe => pe.Voicers)
+                            .ThenInclude(v => v.Creator)
+                .Include(pe => pe.Voicers)
+                    .ThenInclude(v => v.Creator)
+                .FirstOrDefaultAsync(p => p.Id == episodeId);
             if (podcastEpisode == null)
                 return NotFound();
 
@@ -240,9 +290,30 @@ namespace LoviBackend.Controllers
                         Name = pe.Name,
                         Description = pe.Description,
                         CoverImageUrl = pe.CoverImagePath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
-                        AudioUrl = Url.Action(nameof(GetEpisodeAudio), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme)!
+                        AudioUrl = Url.Action(nameof(GetEpisodeAudio), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme)!,
+                        Voicers = pe.Voicers.Select(v => new CreatorDto
+                        {
+                            Id = v.Creator.Id,
+                            Nickname = v.Creator.Nickname,
+                            Name = v.Creator.Name,
+                            Surname = v.Creator.Surname
+                        }).ToList()
                     }).ToList(),
+                    Voicers = podcastEpisode.Podcast.Voicers.Select(v => new CreatorDto
+                    {
+                        Id = v.Creator.Id,
+                        Nickname = v.Creator.Nickname,
+                        Name = v.Creator.Name,
+                        Surname = v.Creator.Surname
+                    }).ToList()
                 },
+                Voicers = podcastEpisode.Voicers.Select(v => new CreatorDto
+                {
+                    Id = v.Creator.Id,
+                    Nickname = v.Creator.Nickname,
+                    Name = v.Creator.Name,
+                    Surname = v.Creator.Surname
+                }).ToList()
             };
 
             return Ok(podcastEpisodeDto);

@@ -7,6 +7,8 @@ namespace LoviBackend.Models.DbSets
     {
         [Key]
         public int Id { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
 
         [Required]
         public int Number {  get; set; }
@@ -24,6 +26,8 @@ namespace LoviBackend.Models.DbSets
         public int PodcastId { get; set; }
         [ForeignKey(nameof(PodcastId))]
         public Podcast Podcast { get; set; } = null!;
+
+        public ICollection<PodcastEpisodeVoicer> Voicers { get; set; } = new List<PodcastEpisodeVoicer>();
 
     }
 }

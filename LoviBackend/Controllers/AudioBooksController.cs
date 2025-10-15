@@ -72,7 +72,7 @@ namespace LoviBackend.Controllers
                 Name = audioBook.Name,
                 Description = audioBook.Description,
                 CoverImageUrl = audioBook.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "AudioBooks", new { id = audioBook.Id }, Request.Scheme) : null,
-                AudioUrl = Url.Action(nameof(GetAudio), "AudioBooks", new { id = audioBook.Id }, Request.Scheme)!,
+                AudioUrl = audioBook.AudioPath != null ? Url.Action(nameof(GetAudio), "AudioBooks", new { id = audioBook.Id }, Request.Scheme) : null,
                 Readers = audioBook.Readers.Select(v => new CreatorDto
                 {
                     Id = v.Creator.Id,
@@ -195,7 +195,7 @@ namespace LoviBackend.Controllers
                     Id = ab.Id,
                     Name = ab.Name,
                     CoverImageUrl = ab.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "AudioBooks", new { id = ab.Id }, Request.Scheme) : null,
-                    AudioUrl = Url.Action(nameof(GetAudio), "AudioBooks", new { id = ab.Id }, Request.Scheme)!,
+                    AudioUrl = ab.AudioPath != null ? Url.Action(nameof(GetAudio), "AudioBooks", new { id = ab.Id }, Request.Scheme) : null,
                     Readers = ab.Readers.Select(v => new CreatorDto
                     {
                         Id = v.Creator.Id,

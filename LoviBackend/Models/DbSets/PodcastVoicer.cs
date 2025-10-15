@@ -7,5 +7,7 @@
 
         public int CreatorId { get; set; }
         public Creator Creator { get; set; } = null!;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

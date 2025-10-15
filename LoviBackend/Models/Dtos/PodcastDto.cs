@@ -1,5 +1,4 @@
-﻿using LoviBackend.Models.DbSets;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace LoviBackend.Models.Dtos
 {
@@ -11,12 +10,13 @@ namespace LoviBackend.Models.Dtos
         public string Name { get; set; } = null!;
 
         public string? CoverImageUrl { get; set; }
+        public IFormFile? CoverImage { get; set; }
 
         public string? Description { get; set; }
 
-        public ICollection<PodcastEpisodeDto> Episodes { get; set; } = null!;
+        public ICollection<PodcastEpisodeDto>? Episodes { get; set; } = null!;
 
-        public ICollection<CreatorDto> Voicers { get; set; } = null!;
+        public ICollection<CreatorDto>? Voicers { get; set; } = null!;
 
     }
 }

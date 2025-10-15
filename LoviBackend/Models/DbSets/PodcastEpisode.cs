@@ -21,7 +21,7 @@ namespace LoviBackend.Models.DbSets
 
         public string? Description { get; set; }
 
-        public string AudioPath { get; set; } = null!;
+        public string? AudioPath { get; set; } = null!;
 
         public int PodcastId { get; set; }
         [ForeignKey(nameof(PodcastId))]

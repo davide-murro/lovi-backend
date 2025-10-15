@@ -14,14 +14,17 @@ namespace LoviBackend.Models.Dtos
         public string Name { get; set; } = null!;
 
         public string? CoverImageUrl { get; set; }
+        public IFormFile? CoverImage { get; set; }
 
         public string? Description { get; set; }
 
-        public string AudioUrl { get; set; } = null!;
+        public string? AudioUrl { get; set; }
+        public IFormFile? Audio { get; set; }
 
-        public PodcastDto Podcast { get; set; } = null!;
+        public int? PodcastId { get; set; }
+        public PodcastDto? Podcast { get; set; }
 
-        public ICollection<CreatorDto> Voicers { get; set; } = null!;
+        public ICollection<CreatorDto>? Voicers { get; set; } = null!;
 
     }
 }

@@ -10,5 +10,6 @@ namespace LoviBackend.Models.Dtos.Pagination
 
         [RegularExpression("asc|desc")]
         public string SortOrder { get; set; } = "asc";
+        public string? Search { get; set; }
     }
 }

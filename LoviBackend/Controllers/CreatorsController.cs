@@ -1,8 +1,11 @@
 ﻿using LoviBackend.Data;
 using LoviBackend.Models.DbSets;
 using LoviBackend.Models.Dtos;
+using LoviBackend.Models.Dtos.Pagination;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace LoviBackend.Controllers
 {
@@ -54,6 +57,7 @@ namespace LoviBackend.Controllers
 
         // PUT: api/creators/5
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, CreatorDto creatorDto)
         {
             if (id != creatorDto.Id)
@@ -84,6 +88,7 @@ namespace LoviBackend.Controllers
 
         // POST: api/creators
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<CreatorDto>> Create(CreatorDto creatorDto)
         {
             var creator = new Creator
@@ -101,6 +106,7 @@ namespace LoviBackend.Controllers
 
         // DELETE: api/creators/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var creator = await _context.Creators.FindAsync(id);
@@ -127,6 +133,47 @@ namespace LoviBackend.Controllers
             }
 
             return NotFound(false);
+        }
+
+        // GET: api/creators/paged
+        [HttpGet("paged")]
+        public async Task<ActionResult<PagedResult<CreatorDto>>> GetPaged([FromQuery] PagedQuery query)
+        {
+            // Base query from EF
+            var creatorsQuery = _context.Creators.AsNoTracking();
+
+            // Sorting
+            if (string.IsNullOrEmpty(query.SortBy)) query.SortBy = "Id";
+            var property = typeof(Creator).GetProperty(query.SortBy, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)!;
+            creatorsQuery = query.SortOrder.ToLower() == "desc"
+                ? creatorsQuery.OrderByDescending(e => EF.Property<object>(e, property.Name))
+                : creatorsQuery.OrderBy(e => EF.Property<object>(e, property.Name));
+
+            // Total count (before pagination)
+            var totalCount = await creatorsQuery.CountAsync();
+
+            // Apply pagination and project to DTO
+            var items = await creatorsQuery
+                .Skip((query.PageNumber - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .Select(p => new CreatorDto
+                {
+                    Id = p.Id,
+                    Nickname = p.Nickname,
+                    Name = p.Name,
+                    Surname = p.Surname
+                })
+                .ToListAsync();
+
+            // Wrap result
+            var result = new PagedResult<CreatorDto>
+            {
+                PagedQuery = query,
+                Items = items,
+                TotalCount = totalCount
+            };
+
+            return Ok(result);
         }
     }
 }

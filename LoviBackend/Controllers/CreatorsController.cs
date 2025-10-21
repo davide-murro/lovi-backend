@@ -30,6 +30,8 @@ namespace LoviBackend.Controllers
             {
                 Id = creator.Id,
                 Nickname = creator.Nickname,
+                Name = creator.Name,
+                Surname = creator.Surname,
             }).ToList();
 
             return Ok(creatorDtos);
@@ -49,7 +51,9 @@ namespace LoviBackend.Controllers
             var creatorDto = new CreatorDto
             {
                 Id = creator.Id,
-                Nickname = creator.Nickname
+                Nickname = creator.Nickname,
+                Name = creator.Name,
+                Surname = creator.Surname
             };
 
             return creatorDto;
@@ -65,23 +69,20 @@ namespace LoviBackend.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(creatorDto).State = EntityState.Modified;
+            var creator = await _context.Creators.FindAsync(id);
+            if (creator == null)
+            {
+                return NotFound();
+            }
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Creators.Any(e => e.Id == id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            // edit podcast
+            creator.UpdatedAt = DateTime.UtcNow;
+            creator.Nickname = creatorDto.Nickname;
+            creator.Name = creatorDto.Name;
+            creator.Surname = creatorDto.Surname;
+
+            _context.Creators.Update(creator);
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
@@ -93,7 +94,6 @@ namespace LoviBackend.Controllers
         {
             var creator = new Creator
             {
-                Id = creatorDto.Id,
                 Nickname = creatorDto.Nickname,
                 Name = creatorDto.Name,
                 Surname = creatorDto.Surname
@@ -101,7 +101,13 @@ namespace LoviBackend.Controllers
             _context.Creators.Add(creator);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(Get), new { id = creatorDto.Id }, creatorDto);
+            return CreatedAtAction(nameof(Get), new { id = creator.Id }, new CreatorDto
+            {
+                Id = creator.Id,
+                Nickname = creator.Nickname,
+                Name = creator.Name,
+                Surname = creator.Surname
+            });
         }
 
         // DELETE: api/creators/5

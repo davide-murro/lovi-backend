@@ -88,30 +88,81 @@ namespace LoviBackend.Controllers
         // PUT: api/audio-books/5
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Update(int id, AudioBookDto audioBookDto)
+        public async Task<IActionResult> Update(int id, [FromForm] AudioBookDto audioBookDto)
         {
             if (id != audioBookDto.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(audioBookDto).State = EntityState.Modified;
+            var audioBook = await _context.AudioBooks.FirstOrDefaultAsync((ab) => ab.Id == id);
+            if (audioBook == null)
+            {
+                return NotFound();
+            }
 
-            try
+            // edit audioBook
+            audioBook.UpdatedAt = DateTime.UtcNow;
+            audioBook.Name = audioBookDto.Name;
+            audioBook.Description = audioBookDto.Description;
+
+            // Handle file upload
+            var uploadPath = Path.Combine(_hostingEnvironment.ContentRootPath, _configuration["UploadsPath"]!);
+            var audioBookPath = Path.Combine("audio-books", audioBook.Id.ToString());
+            Directory.CreateDirectory(Path.Combine(uploadPath, audioBookPath));
+
+            if (audioBookDto.CoverImageUrl == null && audioBook.CoverImagePath != null)
             {
-                await _context.SaveChangesAsync();
+                // Delete Existing File
+                var oldFilePath = Path.Combine(uploadPath, audioBook.CoverImagePath);
+                if (System.IO.File.Exists(oldFilePath))
+                {
+                    System.IO.File.Delete(oldFilePath);
+                }
+
+                // Update the path in the database model
+                audioBook.CoverImagePath = null;
             }
-            catch (DbUpdateConcurrencyException)
+            if (audioBookDto.CoverImage != null)
             {
-                if (!_context.AudioBooks.Any(e => e.Id == id))
+                // Save the new file
+                var fileName = $"cover{Path.GetExtension(audioBookDto.CoverImage.FileName)}";
+                using (var stream = new FileStream(Path.Combine(uploadPath, audioBookPath, fileName), FileMode.Create))
                 {
-                    return NotFound();
+                    await audioBookDto.CoverImage.CopyToAsync(stream);
                 }
-                else
-                {
-                    throw;
-                }
+
+                // Update the path in the database model
+                audioBook.CoverImagePath = Path.Combine(audioBookPath, fileName);
             }
+
+            if (audioBookDto.AudioUrl == null && audioBook.AudioPath != null)
+            {
+                // Delete Existing File
+                var oldFilePath = Path.Combine(uploadPath, audioBook.AudioPath);
+                if (System.IO.File.Exists(oldFilePath))
+                {
+                    System.IO.File.Delete(oldFilePath);
+                }
+
+                // Update the path in the database model
+                audioBook.AudioPath = null;
+            }
+            if (audioBookDto.Audio != null)
+            {
+                // Save the new file
+                var fileName = $"cover{Path.GetExtension(audioBookDto.Audio.FileName)}";
+                using (var stream = new FileStream(Path.Combine(uploadPath, audioBookPath, fileName), FileMode.Create))
+                {
+                    await audioBookDto.Audio.CopyToAsync(stream);
+                }
+
+                // Update the path in the database model
+                audioBook.AudioPath = Path.Combine(audioBookPath, fileName);
+            }
+
+            _context.AudioBooks.Update(audioBook);
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
@@ -119,7 +170,7 @@ namespace LoviBackend.Controllers
         // POST: api/audio-books
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<AudioBookDto>> Create(AudioBookDto audioBookDto)
+        public async Task<ActionResult<AudioBookDto>> Create([FromForm] AudioBookDto audioBookDto)
         {
             var audioBook = new AudioBook
             {
@@ -127,10 +178,52 @@ namespace LoviBackend.Controllers
                 Name = audioBookDto.Name,
                 Description = audioBookDto.Description,
             };
+
             _context.AudioBooks.Add(audioBook);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(Get), new { id = audioBook.Id }, audioBook);
+            // Handle file upload
+            var uploadPath = Path.Combine(_hostingEnvironment.ContentRootPath, _configuration["UploadsPath"]!);
+            var audioBookPath = Path.Combine("audio-books", audioBook.Id.ToString());
+            Directory.CreateDirectory(Path.Combine(uploadPath, audioBookPath));
+
+            if (audioBookDto.CoverImage != null)
+            {
+                var fileName = $"cover{Path.GetExtension(audioBookDto.CoverImage.FileName)}";
+
+                using (var stream = new FileStream(Path.Combine(uploadPath, audioBookPath, fileName), FileMode.Create))
+                {
+                    await audioBookDto.CoverImage.CopyToAsync(stream);
+                }
+
+                audioBook.CoverImagePath = Path.Combine(audioBookPath, fileName);
+
+                _context.AudioBooks.Update(audioBook);
+                await _context.SaveChangesAsync();
+            }
+            if (audioBookDto.Audio != null)
+            {
+                var fileName = $"audio{Path.GetExtension(audioBookDto.Audio.FileName)}";
+
+                using (var stream = new FileStream(Path.Combine(uploadPath, audioBookPath, fileName), FileMode.Create))
+                {
+                    await audioBookDto.Audio.CopyToAsync(stream);
+                }
+
+                audioBook.AudioPath = Path.Combine(audioBookPath, fileName);
+
+                _context.AudioBooks.Update(audioBook);
+                await _context.SaveChangesAsync();
+            }
+
+            return CreatedAtAction(nameof(Get), new { id = audioBook.Id }, new PodcastEpisodeDto
+            {
+                Id = audioBook.Id,
+                Name = audioBook.Name,
+                Description = audioBook.Description,
+                CoverImageUrl = audioBook.CoverImagePath,
+                AudioUrl = audioBook.AudioPath
+            });
         }
 
         // DELETE: api/audio-books/5
@@ -239,7 +332,7 @@ namespace LoviBackend.Controllers
             return File(fileStream, contentType, enableRangeProcessing: true);
         }
 
-        // GET: api/audio-books/1/audio
+        // GET: api/audio-books/5/audio
         [HttpGet("{id}/audio")]
         public IActionResult GetAudio(int id)
         {
@@ -259,6 +352,39 @@ namespace LoviBackend.Controllers
             var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
 
             return File(fileStream, contentType, enableRangeProcessing: true);
+        }
+
+        // POST: api/audio-books/5/readers/2
+        [HttpPost("{id}/readers/{readerId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddVoicer(int id, int readerId)
+        {
+            var audioBookReader = new AudioBookReader
+            {
+                AudioBookId = id,
+                CreatorId = readerId,
+            };
+            _context.AudioBookReaders.Add(audioBookReader);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        // DELETE: api/audio-books/5/readers/2
+        [HttpDelete("{id}/readers/{readerId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> RemoveVoicer(int id, int readerId)
+        {
+            var audioBookReader = await _context.AudioBookReaders.FirstOrDefaultAsync(abr => abr.CreatorId == readerId);
+            if (audioBookReader == null)
+            {
+                return NotFound();
+            }
+
+            _context.AudioBookReaders.Remove(audioBookReader);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
 
     }

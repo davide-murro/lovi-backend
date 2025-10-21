@@ -10,7 +10,6 @@ namespace LoviBackend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class LibrariesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -97,6 +96,7 @@ namespace LoviBackend.Controllers
 
         // GET: api/libraries/me
         [HttpGet("me")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<LibraryDto>>> GetMe()
         {
             var userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -180,6 +180,7 @@ namespace LoviBackend.Controllers
 
         // POST: api/libraries/me
         [HttpPost("me")]
+        [Authorize]
         public async Task<ActionResult<LibraryDto>> CreateMe(ManageLibraryDto manageLibraryDto)
         {
             var userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -204,6 +205,7 @@ namespace LoviBackend.Controllers
 
         // POST: api/libraries/me/list
         [HttpPost("me/list")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<LibraryDto>>> CreateMe([FromBody] List<ManageLibraryDto> manageLibraryDtos)
         {
             var userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -234,6 +236,7 @@ namespace LoviBackend.Controllers
 
         // DELETE: api/libraries/me
         [HttpDelete("me")]
+        [Authorize]
         public async Task<IActionResult> DeleteMe()
         {
             var userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -252,6 +255,7 @@ namespace LoviBackend.Controllers
 
         // DELETE: api/libraries/me/2
         [HttpDelete("me/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteMe(int id)
         {
             var userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -276,6 +280,7 @@ namespace LoviBackend.Controllers
 
         // DELETE: api/libraries/me/list
         [HttpDelete("me/list")]
+        [Authorize]
         public async Task<IActionResult> DeleteMe([FromBody] List<int> ids)
         {
             var userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);

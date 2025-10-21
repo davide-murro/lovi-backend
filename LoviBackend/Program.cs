@@ -1,4 +1,5 @@
 using LoviBackend.Data;
+using LoviBackend.Data.Extensions;
 using LoviBackend.Models.DbSets;
 using LoviBackend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -30,7 +31,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 );
 
 // identity
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+    })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
@@ -75,6 +79,8 @@ builder.Services.AddControllers(options =>
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+app.MigrateDatabase<ApplicationDbContext>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

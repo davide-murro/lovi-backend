@@ -198,10 +198,10 @@ namespace LoviBackend.Controllers
                 }
 
                 podcast.CoverImagePath = Path.Combine(podcastPath, fileName);
-            }
 
-            _context.Podcasts.Update(podcast);
-            await _context.SaveChangesAsync();
+                _context.Podcasts.Update(podcast);
+                await _context.SaveChangesAsync();
+            }
 
             return CreatedAtAction(nameof(Get), new { id = podcast.Id }, new PodcastDto
             {
@@ -320,8 +320,8 @@ namespace LoviBackend.Controllers
             return File(fileStream, contentType, enableRangeProcessing: true);
         }
 
-        // POST: api/podcasts/5/voicer/2
-        [HttpPost("{id}/voicer/{voicerId}")]
+        // POST: api/podcasts/5/voicers/2
+        [HttpPost("{id}/voicers/{voicerId}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddVoicer(int id, int voicerId)
         {
@@ -336,8 +336,8 @@ namespace LoviBackend.Controllers
             return NoContent();
         }
 
-        // DELETE: api/podcasts/5/voicer/2
-        [HttpDelete("{id}/voicer/{voicerId}")]
+        // DELETE: api/podcasts/5/voicers/2
+        [HttpDelete("{id}/voicers/{voicerId}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> RemoveVoicer(int id, int voicerId)
         {
@@ -467,7 +467,7 @@ namespace LoviBackend.Controllers
         // PUT: api/podcasts/5/episodes/1
         [HttpPut("{id}/episodes/{episodeId}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<PodcastEpisodeDto>> UpdateEpisode(int id, int episodeId, [FromForm] PodcastEpisodeDto podcastEpisodeDto)
+        public async Task<IActionResult> UpdateEpisode(int id, int episodeId, [FromForm] PodcastEpisodeDto podcastEpisodeDto)
         {
             if (id != podcastEpisodeDto.PodcastId || episodeId != podcastEpisodeDto.Id)
             {
@@ -544,15 +544,7 @@ namespace LoviBackend.Controllers
             _context.PodcastEpisodes.Update(podcastEpisode);
             await _context.SaveChangesAsync();
 
-            return Ok(new PodcastEpisodeDto
-            {
-                Id = podcastEpisode.Id,
-                Name = podcastEpisode.Name,
-                Description = podcastEpisode.Description,
-                CoverImageUrl = podcastEpisode.CoverImagePath,
-                AudioUrl = podcastEpisode.AudioPath,
-                PodcastId = podcastEpisode.PodcastId
-            });
+            return NoContent();
         }
 
         // POST: api/podcasts/5/episodes
@@ -587,6 +579,9 @@ namespace LoviBackend.Controllers
                 }
 
                 podcastEpisode.CoverImagePath = Path.Combine(podcastEpisodePath, fileName);
+
+                _context.PodcastEpisodes.Update(podcastEpisode);
+                await _context.SaveChangesAsync();
             }
             if (podcastEpisodeDto.Audio != null)
             {
@@ -598,10 +593,10 @@ namespace LoviBackend.Controllers
                 }
 
                 podcastEpisode.AudioPath = Path.Combine(podcastEpisodePath, fileName);
-            }
 
-            _context.PodcastEpisodes.Update(podcastEpisode);
-            await _context.SaveChangesAsync();
+                _context.PodcastEpisodes.Update(podcastEpisode);
+                await _context.SaveChangesAsync();
+            }
 
             return CreatedAtAction(nameof(GetEpisode), new { id = podcastEpisode.PodcastId, episodeId = podcastEpisode.Id }, new PodcastEpisodeDto
             {
@@ -654,8 +649,8 @@ namespace LoviBackend.Controllers
             return NotFound(false);
         }
 
-        // POST: api/podcasts/5/episodes/1/voicer/2
-        [HttpPost("{id}/episodes/{episodeId}/voicer/{voicerId}")]
+        // POST: api/podcasts/5/episodes/1/voicers/2
+        [HttpPost("{id}/episodes/{episodeId}/voicers/{voicerId}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddEpisodeVoicer(int id, int episodeId, int voicerId)
         {
@@ -670,8 +665,8 @@ namespace LoviBackend.Controllers
             return NoContent();
         }
 
-        // DELETE: api/podcasts/5/episodes/1/voicer/2
-        [HttpDelete("{id}/episodes/{episodeId}/voicer/{voicerId}")]
+        // DELETE: api/podcasts/5/episodes/1/voicers/2
+        [HttpDelete("{id}/episodes/{episodeId}/voicers/{voicerId}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> RemoveEpisodeVoicer(int id, int episodeId, int voicerId)
         {

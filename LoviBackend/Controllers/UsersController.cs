@@ -1,7 +1,9 @@
-﻿using LoviBackend.Data;
+﻿using Humanizer;
+using LoviBackend.Data;
 using LoviBackend.Models.DbSets;
 using LoviBackend.Models.Dtos;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -13,10 +15,15 @@ namespace LoviBackend.Controllers
     public class UsersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public UsersController(ApplicationDbContext context)
+        public UsersController(
+            ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager
+        )
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: api/users
@@ -148,7 +155,7 @@ namespace LoviBackend.Controllers
                 return Unauthorized();
             }
 
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userManager.FindByIdAsync(id);
 
             if (user == null)
             {
@@ -186,7 +193,7 @@ namespace LoviBackend.Controllers
             }
 
             // 3. Find the existing user in the database
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound();
@@ -197,20 +204,10 @@ namespace LoviBackend.Controllers
             user.Name = userDto.Name;
 
             // 5. Save the changes
-            try
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Users.Any(e => e.Id == id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return BadRequest(result.Errors);
             }
 
             return NoContent();

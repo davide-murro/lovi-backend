@@ -148,6 +148,18 @@ namespace LoviBackend.Controllers
             // Base query from EF
             var creatorsQuery = _context.Creators.AsNoTracking();
 
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(query.Search))
+            {
+                string search = query.Search.ToLower();
+
+                creatorsQuery = creatorsQuery.Where(p =>
+                    p.Nickname.ToLower().Contains(search) ||
+                    p.Name == null || p.Name.ToLower().Contains(search) ||
+                    p.Surname == null || p.Surname.ToLower().Contains(search)
+                );
+            }
+
             // Sorting
             if (string.IsNullOrEmpty(query.SortBy)) query.SortBy = "Id";
             var property = typeof(Creator).GetProperty(query.SortBy, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)!;

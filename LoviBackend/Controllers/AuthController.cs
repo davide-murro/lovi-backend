@@ -47,7 +47,7 @@ namespace LoviBackend.Controllers
             var result = await _userManager.CreateAsync(user, dto.Password);
 
             if (result.Succeeded)
-                return Ok("User created successfully");
+                return NoContent();
 
             return BadRequest(result.Errors);
         }
@@ -70,8 +70,11 @@ namespace LoviBackend.Controllers
 
             // save login
             user.LoggedInAt = DateTime.UtcNow;
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
 
             // creating the necessary claims
             List<Claim> authClaims = [

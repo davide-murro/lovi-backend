@@ -40,6 +40,7 @@ namespace LoviBackend.Controllers
             {
                 Id = podcast.Id,
                 Name = podcast.Name,
+                Description = podcast.Description,
                 Voicers = podcast.Voicers.Select(v => new CreatorDto
                 {
                     Id = v.Creator.Id,
@@ -262,6 +263,22 @@ namespace LoviBackend.Controllers
                     .ThenInclude(v => v.Creator)
                 .AsNoTracking();
 
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(query.Search))
+            {
+                string search = query.Search.ToLower();
+
+                podcastsQuery = podcastsQuery.Where(p =>
+                    p.Name.ToLower().Contains(search) ||
+                    p.Description == null || p.Description.ToLower().Contains(search) ||
+                    p.Voicers.Any(v =>
+                        v.Creator.Nickname.ToLower().Contains(search) ||
+                        v.Creator.Name == null || v.Creator.Name.ToLower().Contains(search) ||
+                        v.Creator.Surname == null || v.Creator.Surname.ToLower().Contains(search)
+                    )
+                );
+            }
+
             // Sorting
             if (string.IsNullOrEmpty(query.SortBy)) query.SortBy = "Id";
             var property = typeof(Podcast).GetProperty(query.SortBy, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)!;
@@ -281,6 +298,7 @@ namespace LoviBackend.Controllers
                     Id = p.Id,
                     Name = p.Name,
                     CoverImageUrl = p.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = p.Id }, Request.Scheme) : null,
+                    Description = p.Description,
                     Voicers = p.Voicers.Select(v => new CreatorDto
                     {
                         Id = v.Creator.Id,
@@ -467,6 +485,8 @@ namespace LoviBackend.Controllers
         // PUT: api/podcasts/5/episodes/1
         [HttpPut("{id}/episodes/{episodeId}")]
         [Authorize(Roles = "Admin")]
+        [RequestSizeLimit(500_000_000)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 500_000_000)]
         public async Task<IActionResult> UpdateEpisode(int id, int episodeId, [FromForm] PodcastEpisodeDto podcastEpisodeDto)
         {
             if (id != podcastEpisodeDto.PodcastId || episodeId != podcastEpisodeDto.Id)
@@ -550,6 +570,8 @@ namespace LoviBackend.Controllers
         // POST: api/podcasts/5/episodes
         [HttpPost("{id}/episodes")]
         [Authorize(Roles = "Admin")]
+        [RequestSizeLimit(500_000_000)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 500_000_000)]
         public async Task<ActionResult<PodcastEpisodeDto>> CreateEpisode(int id, [FromForm] PodcastEpisodeDto podcastEpisodeDto)
         {
             var podcastEpisode = new PodcastEpisode

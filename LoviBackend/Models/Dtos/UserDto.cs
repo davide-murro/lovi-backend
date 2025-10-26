@@ -4,11 +4,14 @@ namespace LoviBackend.Models.Dtos
 {
     public class UserDto
     {
-        [Required]
-        public string Id { get; set; } = null!;
+        public string? Id { get; set; } = null!;
+
+        public string? NewPassword { get; set; }
 
         [EmailAddress]
-        public string? Email { get; set; }
+        public string Email { get; set; } = null!;
+
+        public bool? EmailConfirmed { get; set; }
 
         [Required]
         public string Name { get; set; } = null!;

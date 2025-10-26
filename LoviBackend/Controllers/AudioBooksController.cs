@@ -40,6 +40,7 @@ namespace LoviBackend.Controllers
             {
                 Id = audioBook.Id,
                 Name = audioBook.Name,
+                Description = audioBook.Description,
                 Readers = audioBook.Readers.Select(v => new CreatorDto
                 {
                     Id = v.Creator.Id,
@@ -88,6 +89,8 @@ namespace LoviBackend.Controllers
         // PUT: api/audio-books/5
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
+        [RequestSizeLimit(500_000_000)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 500_000_000)]
         public async Task<IActionResult> Update(int id, [FromForm] AudioBookDto audioBookDto)
         {
             if (id != audioBookDto.Id)
@@ -170,6 +173,8 @@ namespace LoviBackend.Controllers
         // POST: api/audio-books
         [HttpPost]
         [Authorize(Roles = "Admin")]
+        [RequestSizeLimit(500_000_000)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 500_000_000)]
         public async Task<ActionResult<AudioBookDto>> Create([FromForm] AudioBookDto audioBookDto)
         {
             var audioBook = new AudioBook
@@ -268,6 +273,22 @@ namespace LoviBackend.Controllers
                     .ThenInclude(r => r.Creator)
                 .AsNoTracking();
 
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(query.Search))
+            {
+                string search = query.Search.ToLower();
+
+                audioBooksQuery = audioBooksQuery.Where(p =>
+                    p.Name.ToLower().Contains(search) ||
+                    p.Description == null || p.Description.ToLower().Contains(search) ||
+                    p.Readers.Any(v =>
+                        v.Creator.Nickname.ToLower().Contains(search) ||
+                        v.Creator.Name == null || v.Creator.Name.ToLower().Contains(search) ||
+                        v.Creator.Surname == null || v.Creator.Surname.ToLower().Contains(search)
+                    )
+                );
+            }
+
             // Sorting
             if (string.IsNullOrEmpty(query.SortBy)) query.SortBy = "Id";
             var property = typeof(AudioBook).GetProperty(query.SortBy, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)!;
@@ -288,6 +309,7 @@ namespace LoviBackend.Controllers
                     Id = ab.Id,
                     Name = ab.Name,
                     CoverImageUrl = ab.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "AudioBooks", new { id = ab.Id }, Request.Scheme) : null,
+                    Description = ab.Description,
                     AudioUrl = ab.AudioPath != null ? Url.Action(nameof(GetAudio), "AudioBooks", new { id = ab.Id }, Request.Scheme) : null,
                     Readers = ab.Readers.Select(v => new CreatorDto
                     {

@@ -40,7 +40,7 @@ namespace LoviBackend.Controllers
             var libraryDtos = libraries.Select(l => new LibraryDto
             {
                 Id = l.Id,
-                User = new UserDto
+                User = new UserProfileDto
                 {
                     Id = l.User.Id,
                     Name = l.User.Name
@@ -123,7 +123,7 @@ namespace LoviBackend.Controllers
             var libraryDtos = libraries.Select(l => new LibraryDto
             {
                 Id = l.Id,
-                User = new UserDto
+                User = new UserProfileDto
                 {
                     Id = l.User.Id,
                     Name = l.User.Name

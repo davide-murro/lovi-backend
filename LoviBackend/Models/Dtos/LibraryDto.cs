@@ -5,7 +5,7 @@ namespace LoviBackend.Models.Dtos
     {
         public int Id { get; set; }
 
-        public UserDto User { get; set; } = null!;
+        public UserProfileDto User { get; set; } = null!;
 
         public PodcastDto? Podcast { get; set; }
 

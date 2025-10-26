@@ -2,10 +2,14 @@
 using LoviBackend.Data;
 using LoviBackend.Models.DbSets;
 using LoviBackend.Models.Dtos;
+using LoviBackend.Models.Dtos.Pagination;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
+using System.Reflection;
 using System.Security.Claims;
 
 namespace LoviBackend.Controllers
@@ -14,27 +18,27 @@ namespace LoviBackend.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public UsersController(
-            ApplicationDbContext context,
             UserManager<ApplicationUser> userManager
         )
         {
-            _context = context;
             _userManager = userManager;
         }
 
         // GET: api/users
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<UserDto>>> Get()
         {
-            var users = await _context.Users.ToListAsync();
+            var users = await _userManager.Users.ToListAsync();
 
             var userDtos = users.Select(user => new UserDto
             {
                 Id = user.Id,
+                Email = user.Email!,
+                EmailConfirmed = user.EmailConfirmed,
                 Name = user.Name,
             }).ToList();
 
@@ -43,9 +47,10 @@ namespace LoviBackend.Controllers
 
         // GET: api/users/5
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<UserDto>> Get(string id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userManager.FindByIdAsync(id);
 
             if (user == null)
             {
@@ -55,6 +60,8 @@ namespace LoviBackend.Controllers
             var userDto = new UserDto
             {
                 Id = user.Id,
+                Email = user.Email!,
+                EmailConfirmed = user.EmailConfirmed,
                 Name = user.Name,
             };
 
@@ -72,22 +79,47 @@ namespace LoviBackend.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(userDto).State = EntityState.Modified;
-
-            try
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
             {
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
-            catch (DbUpdateConcurrencyException)
+
+            // edit podcast
+            if (userDto.NewPassword != null && userDto.NewPassword != "")
             {
-                if (!_context.Users.Any(e => e.Id == id))
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var decodedToken = Uri.UnescapeDataString(token);
+                var resultPassword = await _userManager.ResetPasswordAsync(user, decodedToken, userDto.NewPassword);
+                if (!resultPassword.Succeeded)
                 {
-                    return NotFound();
+                    return BadRequest(resultPassword.Errors);
                 }
-                else
+            }
+
+            if (userDto.Email != user.Email)
+            {
+                var emailResult = await _userManager.SetEmailAsync(user, userDto.Email);
+                if (!emailResult.Succeeded)
                 {
-                    throw;
+                    return BadRequest(emailResult.Errors);
                 }
+                emailResult = await _userManager.SetUserNameAsync(user, userDto.Email);
+                if (!emailResult.Succeeded)
+                {
+                    return BadRequest(emailResult.Errors);
+                }
+            }
+
+            user.UpdatedAt = DateTime.UtcNow;
+            user.EmailConfirmed = userDto.EmailConfirmed ?? false;
+            user.Name = userDto.Name;
+
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
             }
 
             return NoContent();
@@ -101,14 +133,22 @@ namespace LoviBackend.Controllers
         {
             var user = new ApplicationUser
             {
-                Id = userDto.Id,
+                UserName = userDto.Email,
                 Email = userDto.Email,
+                EmailConfirmed = userDto.EmailConfirmed ?? false,
                 Name = userDto.Name,
             };
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            var result = await _userManager.CreateAsync(user, userDto.NewPassword!);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
 
-            return CreatedAtAction(nameof(Get), new { id = user.Id }, user);
+            return CreatedAtAction(nameof(Get), new { id = user.Id }, new UserDto
+            {
+                Id = user.Id,
+                Email = user.Email,
+                EmailConfirmed = user.EmailConfirmed,
+                Name = user.Name,
+            });
         }
 
         // DELETE: api/users/5
@@ -116,14 +156,17 @@ namespace LoviBackend.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(string id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound();
             }
 
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
 
             return NoContent();
         }
@@ -132,9 +175,8 @@ namespace LoviBackend.Controllers
         [HttpGet("exists/{id}")]
         public async Task<IActionResult> Exists(string id)
         {
-            var userExists = await _context.Users.AnyAsync(e => e.Id == id);
-
-            if (userExists)
+            var user = await _userManager.FindByIdAsync(id);
+            if (user != null)
             {
                 return Ok(true); // Return 200 OK with a true value
             }
@@ -142,11 +184,63 @@ namespace LoviBackend.Controllers
             return NotFound(false); // Return 404 Not Found with a false value
         }
 
+        // GET: api/users/paged
+        [HttpGet("paged")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<PagedResult<UserDto>>> GetPaged([FromQuery] PagedQuery query)
+        {
+            // Base query from EF
+            var usersQuery = _userManager.Users.AsNoTracking();
 
-        // GET: api/users/me
-        [HttpGet("me")]
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(query.Search))
+            {
+                string search = query.Search.ToLower();
+
+                usersQuery = usersQuery.Where(p =>
+                    p.Name == null || p.Name.ToLower().Contains(search)
+                );
+            }
+
+            // Sorting
+            if (string.IsNullOrEmpty(query.SortBy)) query.SortBy = "Id";
+            var property = typeof(ApplicationUser).GetProperty(query.SortBy, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)!;
+            usersQuery = query.SortOrder.ToLower() == "desc"
+                ? usersQuery.OrderByDescending(e => EF.Property<object>(e, property.Name))
+                : usersQuery.OrderBy(e => EF.Property<object>(e, property.Name));
+
+            // Total count (before pagination)
+            var totalCount = await usersQuery.CountAsync();
+
+            // Apply pagination and project to DTO
+            var items = await usersQuery
+                .Skip((query.PageNumber - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .Select(u => new UserDto
+                {
+                    Id = u.Id,
+                    Email = u.Email!,
+                    EmailConfirmed = u.EmailConfirmed,
+                    Name = u.Name,
+                })
+                .ToListAsync();
+
+            // Wrap result
+            var result = new PagedResult<UserDto>
+            {
+                PagedQuery = query,
+                Items = items,
+                TotalCount = totalCount
+            };
+
+            return Ok(result);
+        }
+
+
+        // GET: api/users/profiles/me
+        [HttpGet("profiles/me")]
         [Authorize]
-        public async Task<ActionResult<UserDto>> GetMe()
+        public async Task<ActionResult<UserProfileDto>> GetProfileMe()
         {
             var id = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -162,7 +256,7 @@ namespace LoviBackend.Controllers
                 return NotFound();
             }
 
-            var userDto = new UserDto
+            var userDto = new UserProfileDto
             {
                 Id = user.Id,
                 Email = user.Email,
@@ -172,10 +266,10 @@ namespace LoviBackend.Controllers
             return Ok(userDto);
         }
 
-        // PUT: api/users/me
-        [HttpPut("me")]
+        // PUT: api/users/profiles/me
+        [HttpPut("profiles/me")]
         [Authorize]
-        public async Task<IActionResult> UpdateMe(UserDto userDto)
+        public async Task<IActionResult> UpdateProfileMe(UserProfileDto userDto)
         {
             // 1. Get the authenticated user's ID from the JWT token
             var id = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);

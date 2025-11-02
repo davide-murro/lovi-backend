@@ -1,13 +1,15 @@
 ﻿using LoviBackend.Data;
 using LoviBackend.Models.DbSets;
-using LoviBackend.Models.Dtos;
+using LoviBackend.Models.Dtos.Auth;
 using LoviBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Encodings.Web;
 
 namespace LoviBackend.Controllers
@@ -43,13 +45,87 @@ namespace LoviBackend.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            var user = new ApplicationUser { UserName = dto.Email, Email = dto.Email, Name = dto.Name };
+            // save user
+            var user = new ApplicationUser
+            {
+                UserName = dto.Email,
+                Email = dto.Email,
+                Name = dto.Name
+            };
             var result = await _userManager.CreateAsync(user, dto.Password);
 
-            if (result.Succeeded)
-                return NoContent();
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
 
-            return BadRequest(result.Errors);
+            // Generate confirmation token
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+            // Build callback URL (frontend route)
+            var callbackUrl = $"{_hostingEnvironment.ContentRootPath}/auth/confirm-email?userId={user.Id}&token={encodedToken}";
+
+            /*
+            // Send confirmation newEmail
+            await _emailService.SendEmailAsync(
+                user.Email,
+                "Confirm your LOVI account",
+                $"Welcome, {user.DisplayName}!<br><br>" +
+                $"Please confirm your newEmail by clicking this link:<br>" +
+                $"<a href='{callbackUrl}'>Confirm Email</a>"
+            );
+            */
+
+            return NoContent();
+        }
+
+        [HttpPost("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail(ConfirmEmailDto model)
+        {
+            if (string.IsNullOrEmpty(model.UserId) || string.IsNullOrEmpty(model.Token))
+                return BadRequest("Invalid confirmation parameters.");
+
+            var user = await _userManager.FindByIdAsync(model.UserId);
+            if (user == null)
+                return NotFound("User not found.");
+
+            var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Token));
+            var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
+
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            return NoContent();
+        }
+
+        [HttpPost("resend-confirm-email")]
+        public async Task<IActionResult> ResendConfirmEmail(ResendConfirmEmailDto model)
+        {
+            if (string.IsNullOrEmpty(model.Email))
+                return BadRequest("Invalid parameters.");
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+                return NotFound("User not found.");
+
+            // Generate confirmation token
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+            // Build callback URL (frontend route)
+            var callbackUrl = $"{_hostingEnvironment.ContentRootPath}/auth/confirm-email?userId={user.Id}&token={encodedToken}";
+
+            /*
+            // Send confirmation newEmail
+            await _emailService.SendEmailAsync(
+                user.Email,
+                "Confirm your LOVI account",
+                $"Welcome, {user.DisplayName}!<br><br>" +
+                $"Please confirm your newEmail by clicking this link:<br>" +
+                $"<a href='{callbackUrl}'>Confirm Email</a>"
+            );
+            */
+
+            return NoContent();
         }
 
         [HttpPost("login")]
@@ -66,6 +142,17 @@ namespace LoviBackend.Controllers
             if (user == null || (await _userManager.CheckPasswordAsync(user, dto.Password)) == false)
             {
                 return Unauthorized("Invalid login");
+            }
+
+            if (!await _userManager.IsEmailConfirmedAsync(user))
+            {
+                List<IdentityError> errors = new List<IdentityError>();
+                errors.Add(new IdentityError
+                {
+                    Code = "EmailNotConfirmed",
+                    Description = "The email is not confirmed."
+                });
+                return BadRequest(errors);
             }
 
             // save login
@@ -187,8 +274,8 @@ namespace LoviBackend.Controllers
         }
 
 
-        // PUT: api/auth/change-email
-        [HttpPut("change-email")]
+        // POST: api/auth/change-email
+        [HttpPost("change-email")]
         [Authorize]
         public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailDto model)
         {
@@ -198,47 +285,88 @@ namespace LoviBackend.Controllers
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
 
+            if (await _userManager.CheckPasswordAsync(user, model.Password) == false)
+            {
+                return Unauthorized("Invalid password");
+            }
+
             var currentEmail = user.Email;
             var newEmail = model.NewEmail;
 
-            // Update the email and security stamp using UserManager
-            var result = await _userManager.SetEmailAsync(user, newEmail);
-            if (!result.Succeeded)
+            if (string.Equals(currentEmail, newEmail, StringComparison.OrdinalIgnoreCase))
             {
-                return BadRequest(result.Errors);
-            }
-            result = await _userManager.SetUserNameAsync(user, newEmail);
-            if (!result.Succeeded)
-            {
-                return BadRequest(result.Errors);
+
+                List<IdentityError> errors = new List<IdentityError>();
+                errors.Add(new IdentityError
+                {
+                    Code = "ChangeSameMail",
+                    Description = "The new email is the same as the current one."
+                });
+                return BadRequest(errors);
             }
 
+            // Update the newEmail and security stamp using UserManager
+            var token = await _userManager.GenerateChangeEmailTokenAsync(user, newEmail);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+            var callbackUrl = $"{_hostingEnvironment.ContentRootPath}/auth/confirm-change-email?userId={id}&newEmail={newEmail}&token={encodedToken}";
 
             /*
-            // Send confirmation emails
-            // Send to OLD email
             await _emailService.SendEmailAsync(
                 currentEmail,
-                "Email Address Changed",
-                $"Your email address on LOVI has been changed from {currentEmail} to {newEmail}. If this wasn't you, please contact support."
+                "Email Address Changing",
+                $"Your newEmail address on LOVI it s about to change from {currentEmail} to {newEmail}. If this wasn't you, please contact support."
             );
-
-            // Send to NEW email (often requires a verification step in a real app)
             await _emailService.SendEmailAsync(
                 newEmail,
-                "Email Address Updated Successfully",
-                "Your email address has been successfully updated on LOVI."
+                "Confirm Your New Email",
+                $"Please confirm your new email address by clicking here: <a href='{callbackUrl}'>Confirm Email</a>"
             );
             */
-
-            // Note: In a real-world scenario, you would typically send a verification token 
-            // to the new email and require confirmation before updating the database.
 
             return NoContent();
         }
 
-        // PUT: api/auth/change-password
-        [HttpPut("change-password")]
+        // POST: api/auth/confirm-change-email
+        [HttpPost("confirm-change-email")]
+        public async Task<IActionResult> ConfirmChangeEmail(ConfirmChangeEmailDto model)
+        {
+
+            var user = await _userManager.FindByIdAsync(model.UserId);
+            if (user == null)
+                return NotFound();
+
+            string currentEmail = user.Email!;
+            string newEmail = model.NewEmail;
+            string token = model.Token;
+
+            var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token));
+            var result = await _userManager.ChangeEmailAsync(user, newEmail, decodedToken);
+
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            await _userManager.SetUserNameAsync(user, newEmail);
+            await _userManager.UpdateSecurityStampAsync(user);
+
+            /*
+            await _emailService.SendEmailAsync(
+                currentEmail,
+                "Email Address Changed",
+                $"Your newEmail address on LOVI has been changed from {currentEmail} to {newEmail}. If this wasn't you, please contact support."
+            );
+            await _emailService.SendEmailAsync(
+                newEmail,
+                "Email Address Changed",
+                $"Your newEmail address on LOVI has been changed from {currentEmail} to {newEmail}. If this wasn't you, please contact support."
+            );
+            */
+
+            return NoContent();
+        }
+
+        // POST: api/auth/change-password
+        [HttpPost("change-password")]
         [Authorize]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model)
         {
@@ -264,7 +392,7 @@ namespace LoviBackend.Controllers
             // 2. Update security stamp (optional, but good practice to invalidate old tokens)
             await _userManager.UpdateSecurityStampAsync(user);
 
-            /*// 3. Send confirmation email
+            /*// 3. Send confirmation newEmail
             await _emailService.SendEmailAsync(
                 user.Email,
                 "Password Changed Successfully",
@@ -274,33 +402,6 @@ namespace LoviBackend.Controllers
             return NoContent();
         }
 
-        // DELETE: api/auth/delete-account
-        [HttpDelete("delete-account")]
-        [Authorize]
-        public async Task<IActionResult> DeleteAccount()
-        {
-            // 1. Get the current user's ID from the JWT claim
-            var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(id)) return Unauthorized();
-
-            // 2. Load the user object
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
-
-            // 3. Delete the user
-            // Note: You may need to manually delete associated data in other tables here.
-            var result = await _userManager.DeleteAsync(user);
-
-            if (result.Succeeded)
-            {
-                // Note: After deletion, the client must also log out (clear the JWT).
-                // This is handled on the Angular side.
-                return NoContent(); // HTTP 204: Success, no content to return
-            }
-
-            // 4. Handle errors (e.g., database constraints failed)
-            return BadRequest(result.Errors);
-        }
 
         // POST: api/auth/forgot-password
         [HttpPost("forgot-password")]
@@ -329,7 +430,7 @@ namespace LoviBackend.Controllers
             // 2. Encode the necessary parameters for the URL
             // Token must be URL-encoded because it contains special characters
             var encodedToken = UrlEncoder.Default.Encode(token);
-            var encodedEmail = UrlEncoder.Default.Encode(user.Email!); // Use email for simplicity in routing
+            var encodedEmail = UrlEncoder.Default.Encode(user.Email!); // Use newEmail for simplicity in routing
 
             // 3. Construct the Reset URL pointing to your Angular app
             // The Angular route should look something like: /auth/forgot-password?email=...&token=...
@@ -356,7 +457,7 @@ namespace LoviBackend.Controllers
             // 1. Basic input validation
             if (string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.Token) || string.IsNullOrEmpty(model.NewPassword))
             {
-                return BadRequest("All fields (email, token, new password) are required.");
+                return BadRequest("All fields (newEmail, token, new password) are required.");
             }
 
             // 2. Find the user
@@ -379,7 +480,7 @@ namespace LoviBackend.Controllers
             if (result.Succeeded)
             {
                 /*
-                // Optional: Send confirmation email
+                // Optional: Send confirmation newEmail
                 await _emailService.SendEmailAsync(
                     user.Email,
                     "Password Reset Confirmed",
@@ -390,7 +491,40 @@ namespace LoviBackend.Controllers
 
             // 4. Handle Identity errors (e.g., weak password, invalid token)
             // Convert to List for reliable JSON serialization
-            return BadRequest(result.Errors.ToList());
+            return BadRequest(result.Errors);
+        }
+
+        // POST: api/auth/delete-account
+        [HttpPost("delete-account")]
+        [Authorize]
+        public async Task<IActionResult> DeleteAccount(DeleteAccountDto model)
+        {
+            // 1. Get the current user's ID from the JWT claim
+            var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(id)) return Unauthorized();
+
+            // 2. Load the user object
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+
+            if (await _userManager.CheckPasswordAsync(user, model.Password) == false)
+            {
+                return Unauthorized("Invalid password");
+            }
+
+            // 3. Delete the user
+            // Note: You may need to manually delete associated data in other tables here.
+            var result = await _userManager.DeleteAsync(user);
+
+            if (result.Succeeded)
+            {
+                // Note: After deletion, the client must also log out (clear the JWT).
+                // This is handled on the Angular side.
+                return NoContent(); // HTTP 204: Success, no content to return
+            }
+
+            // 4. Handle errors (e.g., database constraints failed)
+            return BadRequest(result.Errors);
         }
     }
 }

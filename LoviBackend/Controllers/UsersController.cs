@@ -1,14 +1,11 @@
-﻿using Humanizer;
-using LoviBackend.Data;
-using LoviBackend.Models.DbSets;
+﻿using LoviBackend.Models.DbSets;
 using LoviBackend.Models.Dtos;
+using LoviBackend.Models.Dtos.Auth;
 using LoviBackend.Models.Dtos.Pagination;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using System.Reflection;
 using System.Security.Claims;
 

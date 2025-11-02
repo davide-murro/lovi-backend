@@ -1,4 +1,4 @@
-﻿namespace LoviBackend.Models.Dtos
+﻿namespace LoviBackend.Models.Dtos.Auth
 {
     public class ChangePasswordDto
     {

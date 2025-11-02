@@ -16,6 +16,8 @@ namespace LoviBackend.Models.DbSets
 
         public string? CoverImagePath { get; set; }
 
+        public string? CoverImagePreviewPath { get; set; }
+
         public string? Description { get; set; }
 
         public ICollection<PodcastEpisode> Episodes { get; set; } = new List<PodcastEpisode>();

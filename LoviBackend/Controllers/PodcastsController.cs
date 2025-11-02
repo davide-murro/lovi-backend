@@ -76,6 +76,7 @@ namespace LoviBackend.Controllers
                 Name = podcast.Name,
                 Description = podcast.Description,
                 CoverImageUrl = podcast.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = podcast.Id }, Request.Scheme) : null,
+                CoverImagePreviewUrl = podcast.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = podcast.Id, isPreview = true }, Request.Scheme) : null,
                 Episodes = podcast.Episodes.OrderBy(pe => pe.Number).Select(pe => new PodcastEpisodeDto
                 {
                     Id = pe.Id,
@@ -83,6 +84,7 @@ namespace LoviBackend.Controllers
                     Name = pe.Name,
                     Description = pe.Description,
                     CoverImageUrl = pe.CoverImagePath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = pe.CoverImagePreviewPath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id, isPreview = true }, Request.Scheme) : null,
                     AudioUrl = pe.AudioPath != null ? Url.Action(nameof(GetEpisodeAudio), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
                     Voicers = pe.Voicers.Select(v => new CreatorDto
                     {
@@ -143,7 +145,6 @@ namespace LoviBackend.Controllers
                 // Update the path in the database model
                 podcast.CoverImagePath = null;
             }
-
             if (podcastDto.CoverImage != null)
             {
                 // Save the new file
@@ -157,6 +158,31 @@ namespace LoviBackend.Controllers
                 podcast.CoverImagePath = Path.Combine(podcastPath, fileName);
             }
 
+            if (podcastDto.CoverImagePreviewUrl == null && podcast.CoverImagePreviewPath != null)
+            {
+                // Delete Existing File
+                var oldFilePath = Path.Combine(uploadPath, podcast.CoverImagePreviewPath);
+                if (System.IO.File.Exists(oldFilePath))
+                {
+                    System.IO.File.Delete(oldFilePath);
+                }
+
+                // Update the path in the database model
+                podcast.CoverImagePreviewPath = null;
+            }
+            if (podcastDto.CoverImagePreview != null)
+            {
+                // Save the new file
+                var fileName = $"cover-preview{Path.GetExtension(podcastDto.CoverImagePreview.FileName)}";
+                using (var stream = new FileStream(Path.Combine(uploadPath, podcastPath, fileName), FileMode.Create))
+                {
+                    await podcastDto.CoverImagePreview.CopyToAsync(stream);
+                }
+
+                // Update the path in the database model
+                podcast.CoverImagePreviewPath = Path.Combine(podcastPath, fileName);
+            }
+
             _context.Podcasts.Update(podcast);
             await _context.SaveChangesAsync();
 
@@ -165,7 +191,8 @@ namespace LoviBackend.Controllers
                 Id = podcast.Id,
                 Name = podcast.Name,
                 Description = podcast.Description,
-                CoverImageUrl = podcast.CoverImagePath
+                CoverImageUrl = podcast.CoverImagePath,
+                CoverImagePreviewUrl = podcast.CoverImagePreviewPath
             });
         }
 
@@ -204,12 +231,27 @@ namespace LoviBackend.Controllers
                 await _context.SaveChangesAsync();
             }
 
+            if (podcastDto.CoverImagePreview != null)
+            {
+                var fileName = $"cover-preview{Path.GetExtension(podcastDto.CoverImagePreview.FileName)}";
+                using (var stream = new FileStream(Path.Combine(uploadPath, podcastPath, fileName), FileMode.Create))
+                {
+                    await podcastDto.CoverImagePreview.CopyToAsync(stream);
+                }
+
+                podcast.CoverImagePreviewPath = Path.Combine(podcastPath, fileName);
+
+                _context.Podcasts.Update(podcast);
+                await _context.SaveChangesAsync();
+            }
+
             return CreatedAtAction(nameof(Get), new { id = podcast.Id }, new PodcastDto
             {
                 Id = podcast.Id,
                 Name = podcast.Name,
                 Description = podcast.Description,
-                CoverImageUrl = podcast.CoverImagePath
+                CoverImageUrl = podcast.CoverImagePath,
+                CoverImagePreviewUrl = podcast.CoverImagePreviewPath
             });
         }
 
@@ -298,6 +340,7 @@ namespace LoviBackend.Controllers
                     Id = p.Id,
                     Name = p.Name,
                     CoverImageUrl = p.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = p.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = p.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = p.Id, isPreview = true }, Request.Scheme) : null,
                     Description = p.Description,
                     Voicers = p.Voicers.Select(v => new CreatorDto
                     {
@@ -322,13 +365,20 @@ namespace LoviBackend.Controllers
 
         // GET: api/podcasts/5/cover
         [HttpGet("{id}/cover")]
-        public IActionResult GetCoverImage(int id)
+        public IActionResult GetCoverImage(int id, bool? isPreview)
         {
             var podcast = _context.Podcasts.Find(id);
-            if (podcast == null || string.IsNullOrEmpty(podcast.CoverImagePath))
+            if (podcast == null)
                 return NotFound();
 
-            var filePath = Path.Combine(_hostingEnvironment.ContentRootPath, _configuration["UploadsPath"]!, podcast.CoverImagePath);
+            var coverImagePath = isPreview == true ? podcast.CoverImagePreviewPath : podcast.CoverImagePath;
+            if (string.IsNullOrEmpty(coverImagePath))
+                return NotFound();
+
+            var filePath = Path.Combine(
+                _hostingEnvironment.ContentRootPath, 
+                _configuration["UploadsPath"]!, 
+                coverImagePath);
             if (!System.IO.File.Exists(filePath))
                 return NotFound();
 
@@ -396,6 +446,7 @@ namespace LoviBackend.Controllers
                 Name = podcastEpisode.Name,
                 Description = podcastEpisode.Description,
                 CoverImageUrl = podcastEpisode.CoverImagePath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = podcastEpisode.PodcastId, episodeId = podcastEpisode.Id }, Request.Scheme) : null,
+                CoverImagePreviewUrl = podcastEpisode.CoverImagePreviewPath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = podcastEpisode.PodcastId, episodeId = podcastEpisode.Id, isPreview = true }, Request.Scheme) : null,
                 AudioUrl = podcastEpisode.AudioPath != null ? Url.Action(nameof(GetEpisodeAudio), "Podcasts", new { id = podcastEpisode.PodcastId, episodeId = podcastEpisode.Id }, Request.Scheme) : null,
                 Podcast = new PodcastDto
                 {
@@ -409,6 +460,7 @@ namespace LoviBackend.Controllers
                         Name = pe.Name,
                         Description = pe.Description,
                         CoverImageUrl = pe.CoverImagePath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
+                        CoverImagePreviewUrl = pe.CoverImagePreviewPath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id, isPreview = true }, Request.Scheme) : null,
                         AudioUrl = pe.AudioPath != null ? Url.Action(nameof(GetEpisodeAudio), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
                         Voicers = pe.Voicers.Select(v => new CreatorDto
                         {
@@ -440,16 +492,20 @@ namespace LoviBackend.Controllers
 
         // GET: api/podcasts/5/episodes/1/cover
         [HttpGet("{id}/episodes/{episodeId}/cover")]
-        public IActionResult GetEpisodeCoverImage(int id, int episodeId)
+        public IActionResult GetEpisodeCoverImage(int id, int episodeId, bool? isPreview)
         {
             var podcastEpisode = _context.PodcastEpisodes.FirstOrDefault((pe) => pe.PodcastId == id && pe.Id == episodeId);
-            if (podcastEpisode == null || string.IsNullOrEmpty(podcastEpisode.CoverImagePath))
+            if (podcastEpisode == null)
+                return NotFound();
+
+            var coverImagePath = isPreview == true ? podcastEpisode.CoverImagePreviewPath : podcastEpisode.CoverImagePath;
+            if (string.IsNullOrEmpty(coverImagePath))
                 return NotFound();
 
             var filePath = Path.Combine(
                 _hostingEnvironment.ContentRootPath,
                 _configuration["UploadsPath"]!,
-                podcastEpisode.CoverImagePath
+                coverImagePath
             );
             if (!System.IO.File.Exists(filePath))
                 return NotFound();
@@ -536,6 +592,31 @@ namespace LoviBackend.Controllers
                 podcastEpisode.CoverImagePath = Path.Combine(podcastEpisodePath, fileName);
             }
 
+            if (podcastEpisodeDto.CoverImagePreviewUrl == null && podcastEpisode.CoverImagePreviewPath != null)
+            {
+                // Delete Existing File
+                var oldFilePath = Path.Combine(uploadPath, podcastEpisode.CoverImagePreviewPath);
+                if (System.IO.File.Exists(oldFilePath))
+                {
+                    System.IO.File.Delete(oldFilePath);
+                }
+
+                // Update the path in the database model
+                podcastEpisode.CoverImagePreviewPath = null;
+            }
+            if (podcastEpisodeDto.CoverImagePreview != null)
+            {
+                // Save the new file
+                var fileName = $"cover-preview{Path.GetExtension(podcastEpisodeDto.CoverImagePreview.FileName)}";
+                using (var stream = new FileStream(Path.Combine(uploadPath, podcastEpisodePath, fileName), FileMode.Create))
+                {
+                    await podcastEpisodeDto.CoverImagePreview.CopyToAsync(stream);
+                }
+
+                // Update the path in the database model
+                podcastEpisode.CoverImagePreviewPath = Path.Combine(podcastEpisodePath, fileName);
+            }
+
             if (podcastEpisodeDto.AudioUrl == null && podcastEpisode.AudioPath != null)
             {
                 // Delete Existing File
@@ -551,7 +632,7 @@ namespace LoviBackend.Controllers
             if (podcastEpisodeDto.Audio != null)
             {
                 // Save the new file
-                var fileName = $"cover{Path.GetExtension(podcastEpisodeDto.Audio.FileName)}";
+                var fileName = $"audio{Path.GetExtension(podcastEpisodeDto.Audio.FileName)}";
                 using (var stream = new FileStream(Path.Combine(uploadPath, podcastEpisodePath, fileName), FileMode.Create))
                 {
                     await podcastEpisodeDto.Audio.CopyToAsync(stream);
@@ -605,6 +686,20 @@ namespace LoviBackend.Controllers
                 _context.PodcastEpisodes.Update(podcastEpisode);
                 await _context.SaveChangesAsync();
             }
+            if (podcastEpisodeDto.CoverImagePreview != null)
+            {
+                var fileName = $"cover-preview{Path.GetExtension(podcastEpisodeDto.CoverImagePreview.FileName)}";
+
+                using (var stream = new FileStream(Path.Combine(uploadPath, podcastEpisodePath, fileName), FileMode.Create))
+                {
+                    await podcastEpisodeDto.CoverImagePreview.CopyToAsync(stream);
+                }
+
+                podcastEpisode.CoverImagePreviewPath = Path.Combine(podcastEpisodePath, fileName);
+
+                _context.PodcastEpisodes.Update(podcastEpisode);
+                await _context.SaveChangesAsync();
+            }
             if (podcastEpisodeDto.Audio != null)
             {
                 var fileName = $"audio{Path.GetExtension(podcastEpisodeDto.Audio.FileName)}";
@@ -626,6 +721,7 @@ namespace LoviBackend.Controllers
                 Name = podcastEpisode.Name,
                 Description = podcastEpisode.Description,
                 CoverImageUrl = podcastEpisode.CoverImagePath,
+                CoverImagePreviewUrl = podcastEpisode.CoverImagePreviewPath,
                 AudioUrl = podcastEpisode.AudioPath,
                 PodcastId = podcastEpisode.PodcastId
             });

@@ -12,6 +12,9 @@ namespace LoviBackend.Models.Dtos
         public string? CoverImageUrl { get; set; }
         public IFormFile? CoverImage { get; set; }
 
+        public string? CoverImagePreviewUrl { get; set; }
+        public IFormFile? CoverImagePreview { get; set; }
+
         public string? Description { get; set; }
 
         public ICollection<PodcastEpisodeDto>? Episodes { get; set; } = null!;

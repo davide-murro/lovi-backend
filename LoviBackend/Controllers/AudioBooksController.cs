@@ -73,6 +73,7 @@ namespace LoviBackend.Controllers
                 Name = audioBook.Name,
                 Description = audioBook.Description,
                 CoverImageUrl = audioBook.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "AudioBooks", new { id = audioBook.Id }, Request.Scheme) : null,
+                CoverImagePreviewUrl = audioBook.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "AudioBooks", new { id = audioBook.Id, isPreview = true }, Request.Scheme) : null,
                 AudioUrl = audioBook.AudioPath != null ? Url.Action(nameof(GetAudio), "AudioBooks", new { id = audioBook.Id }, Request.Scheme) : null,
                 Readers = audioBook.Readers.Select(v => new CreatorDto
                 {
@@ -139,6 +140,31 @@ namespace LoviBackend.Controllers
                 audioBook.CoverImagePath = Path.Combine(audioBookPath, fileName);
             }
 
+            if (audioBookDto.CoverImagePreviewUrl == null && audioBook.CoverImagePreviewPath != null)
+            {
+                // Delete Existing File
+                var oldFilePath = Path.Combine(uploadPath, audioBook.CoverImagePreviewPath);
+                if (System.IO.File.Exists(oldFilePath))
+                {
+                    System.IO.File.Delete(oldFilePath);
+                }
+
+                // Update the path in the database model
+                audioBook.CoverImagePreviewPath = null;
+            }
+            if (audioBookDto.CoverImagePreview != null)
+            {
+                // Save the new file
+                var fileName = $"cover-preview{Path.GetExtension(audioBookDto.CoverImagePreview.FileName)}";
+                using (var stream = new FileStream(Path.Combine(uploadPath, audioBookPath, fileName), FileMode.Create))
+                {
+                    await audioBookDto.CoverImagePreview.CopyToAsync(stream);
+                }
+
+                // Update the path in the database model
+                audioBook.CoverImagePreviewPath = Path.Combine(audioBookPath, fileName);
+            }
+
             if (audioBookDto.AudioUrl == null && audioBook.AudioPath != null)
             {
                 // Delete Existing File
@@ -154,7 +180,7 @@ namespace LoviBackend.Controllers
             if (audioBookDto.Audio != null)
             {
                 // Save the new file
-                var fileName = $"cover{Path.GetExtension(audioBookDto.Audio.FileName)}";
+                var fileName = $"audio{Path.GetExtension(audioBookDto.Audio.FileName)}";
                 using (var stream = new FileStream(Path.Combine(uploadPath, audioBookPath, fileName), FileMode.Create))
                 {
                     await audioBookDto.Audio.CopyToAsync(stream);
@@ -206,6 +232,20 @@ namespace LoviBackend.Controllers
                 _context.AudioBooks.Update(audioBook);
                 await _context.SaveChangesAsync();
             }
+            if (audioBookDto.CoverImagePreview != null)
+            {
+                var fileName = $"cover-preview{Path.GetExtension(audioBookDto.CoverImagePreview.FileName)}";
+
+                using (var stream = new FileStream(Path.Combine(uploadPath, audioBookPath, fileName), FileMode.Create))
+                {
+                    await audioBookDto.CoverImagePreview.CopyToAsync(stream);
+                }
+
+                audioBook.CoverImagePreviewPath = Path.Combine(audioBookPath, fileName);
+
+                _context.AudioBooks.Update(audioBook);
+                await _context.SaveChangesAsync();
+            }
             if (audioBookDto.Audio != null)
             {
                 var fileName = $"audio{Path.GetExtension(audioBookDto.Audio.FileName)}";
@@ -227,6 +267,7 @@ namespace LoviBackend.Controllers
                 Name = audioBook.Name,
                 Description = audioBook.Description,
                 CoverImageUrl = audioBook.CoverImagePath,
+                CoverImagePreviewUrl = audioBook.CoverImagePreviewPath,
                 AudioUrl = audioBook.AudioPath
             });
         }
@@ -309,6 +350,7 @@ namespace LoviBackend.Controllers
                     Id = ab.Id,
                     Name = ab.Name,
                     CoverImageUrl = ab.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "AudioBooks", new { id = ab.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = ab.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "AudioBooks", new { id = ab.Id, isPreview = true }, Request.Scheme) : null,
                     Description = ab.Description,
                     AudioUrl = ab.AudioPath != null ? Url.Action(nameof(GetAudio), "AudioBooks", new { id = ab.Id }, Request.Scheme) : null,
                     Readers = ab.Readers.Select(v => new CreatorDto
@@ -334,16 +376,20 @@ namespace LoviBackend.Controllers
 
         // GET: api/audio-books/5/cover
         [HttpGet("{id}/cover")]
-        public IActionResult GetCoverImage(int id)
+        public IActionResult GetCoverImage(int id, bool? isPreview)
         {
             var audioBook = _context.AudioBooks.Find(id);
-            if (audioBook == null || string.IsNullOrEmpty(audioBook.CoverImagePath))
+            if (audioBook == null)
+                return NotFound();
+
+            var coverImagePath = isPreview == true ? audioBook.CoverImagePreviewPath : audioBook.CoverImagePath;
+            if (string.IsNullOrEmpty(coverImagePath))
                 return NotFound();
 
             var filePath = Path.Combine(
                 _hostingEnvironment.ContentRootPath,
                 _configuration["UploadsPath"]!,
-                audioBook.CoverImagePath
+                coverImagePath 
             );
             if (!System.IO.File.Exists(filePath))
                 return NotFound();

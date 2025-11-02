@@ -50,6 +50,7 @@ namespace LoviBackend.Controllers
                     Id = l.Podcast.Id,
                     Name = l.Podcast.Name,
                     CoverImageUrl = l.Podcast.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetCoverImage), "Podcasts", new { id = l.Podcast.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = l.Podcast.CoverImagePreviewPath != null ? Url.Action(nameof(PodcastsController.GetCoverImage), "Podcasts", new { id = l.Podcast.Id, isPreview = true }, Request.Scheme) : null,
                     Description = l.Podcast.Description,
                     Voicers = l.Podcast.Voicers.Select(v => new CreatorDto
                     {
@@ -65,6 +66,7 @@ namespace LoviBackend.Controllers
                     Number = l.PodcastEpisode.Number,
                     Name = l.PodcastEpisode.Name,
                     CoverImageUrl = l.PodcastEpisode.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetEpisodeCoverImage), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = l.PodcastEpisode.CoverImagePreviewPath != null ? Url.Action(nameof(PodcastsController.GetEpisodeCoverImage), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id, isPreview = true }, Request.Scheme) : null,
                     Description = l.PodcastEpisode.Description,
                     Voicers = l.PodcastEpisode.Voicers.Select(v => new CreatorDto
                     {
@@ -79,6 +81,7 @@ namespace LoviBackend.Controllers
                     Id = l.AudioBook.Id,
                     Name = l.AudioBook.Name,
                     CoverImageUrl = l.AudioBook.CoverImagePath != null ? Url.Action(nameof(AudioBooksController.GetCoverImage), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = l.AudioBook.CoverImagePreviewPath != null ? Url.Action(nameof(AudioBooksController.GetCoverImage), "AudioBooks", new { id = l.AudioBook.Id, isPreview = true }, Request.Scheme) : null,
                     Description = l.AudioBook.Description,
                     AudioUrl = l.AudioBook.AudioPath != null ? Url.Action(nameof(AudioBooksController.GetAudio), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme) : null,
                     Readers = l.AudioBook.Readers.Select(r => new CreatorDto
@@ -133,6 +136,7 @@ namespace LoviBackend.Controllers
                     Id = l.Podcast.Id,
                     Name = l.Podcast.Name,
                     CoverImageUrl = l.Podcast.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetCoverImage), "Podcasts", new { id = l.Podcast.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = l.Podcast.CoverImagePreviewPath != null ? Url.Action(nameof(PodcastsController.GetCoverImage), "Podcasts", new { id = l.Podcast.Id, isPreview = true }, Request.Scheme) : null,
                     Description = l.Podcast.Description,
                     Voicers = l.Podcast.Voicers.Select(v => new CreatorDto
                     {
@@ -148,6 +152,7 @@ namespace LoviBackend.Controllers
                     Number = l.PodcastEpisode.Number,
                     Name = l.PodcastEpisode.Name,
                     CoverImageUrl = l.PodcastEpisode.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetEpisodeCoverImage), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = l.PodcastEpisode.CoverImagePreviewPath != null ? Url.Action(nameof(PodcastsController.GetEpisodeCoverImage), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id, isPreview = true }, Request.Scheme) : null,
                     Description = l.PodcastEpisode.Description,
                     AudioUrl = l.PodcastEpisode.AudioPath != null ? Url.Action(nameof(PodcastsController.GetEpisodeAudio), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme) : null,
                     Voicers = l.PodcastEpisode.Voicers.Select(v => new CreatorDto
@@ -163,6 +168,7 @@ namespace LoviBackend.Controllers
                     Id = l.AudioBook.Id,
                     Name = l.AudioBook.Name,
                     CoverImageUrl = l.AudioBook.CoverImagePath != null ? Url.Action(nameof(AudioBooksController.GetCoverImage), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = l.AudioBook.CoverImagePreviewPath != null ? Url.Action(nameof(AudioBooksController.GetCoverImage), "AudioBooks", new { id = l.AudioBook.Id, isPreview = true }, Request.Scheme) : null,
                     Description = l.AudioBook.Description,
                     AudioUrl = l.AudioBook.AudioPath != null ? Url.Action(nameof(AudioBooksController.GetAudio), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme) : null,
                     Readers = l.AudioBook.Readers.Select(r => new CreatorDto

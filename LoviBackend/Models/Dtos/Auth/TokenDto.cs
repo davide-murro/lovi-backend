@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace LoviBackend.Models.Dtos
+namespace LoviBackend.Models.Dtos.Auth
 {
     public class TokenDto
     {

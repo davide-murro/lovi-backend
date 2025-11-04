@@ -15,5 +15,9 @@ namespace LoviBackend.Models.Dtos.Auth
 
         [Required]
         public string Name { get; set; } = null!;
+
+        public ICollection<RoleDto>? Roles { get; set; } = null!;
+
+        public ICollection<TokenInfoDto>? TokenInfos { get; set; } = null!;
     }
 }

@@ -5,7 +5,7 @@
     <TimeStampOfAssociatedLegacyPublishXmlFile />
     <EncryptedPassword>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAWy879aG15USziUJh0dFc3gAAAAACAAAAAAAQZgAAAAEAACAAAAAPFTBvkw9PG8NRd3FVr1Wa/wVhU7XnicQkXypsQfiUhgAAAAAOgAAAAAIAACAAAACllBBB6e/dkcwBMG9FWDtSq2HF2SFIHmNtx17pOZsc9TAAAACxhpDph16/G5hds0wzQNeuJyjo9Htsh4KDkwf7o1vQ0hCyj7akPu1u29VVVcwbzMZAAAAAo3MfABYYAWqiHzDYDHMYKk4vH8KPao5Q28WMHwE6DuYfOw6pxLcbE7RQUKcWIe/aemZ/5aWpnQufunJxp2TarQ==</EncryptedPassword>
     <_PublishTargetUrl>ftp://win6004.site4now.net/lovi</_PublishTargetUrl>
-    <History>True|2025-10-30T23:43:00.0833393Z||;False|2025-10-30T23:21:23.4274514+01:00||;True|2025-10-30T23:17:35.0070866+01:00||;False|2025-10-30T23:13:07.5399222+01:00||;False|2025-10-30T23:07:17.6954420+01:00||;True|2025-10-30T22:57:34.5497647+01:00||;True|2025-10-30T18:47:54.0065340+01:00||;True|2025-10-30T00:26:42.2713234+01:00||;False|2025-10-30T00:22:45.6093605+01:00||;True|2025-10-30T00:06:57.3562446+01:00||;</History>
+    <History>True|2025-11-04T13:27:51.1774441Z||;True|2025-10-31T00:43:00.0833393+01:00||;False|2025-10-30T23:21:23.4274514+01:00||;True|2025-10-30T23:17:35.0070866+01:00||;False|2025-10-30T23:13:07.5399222+01:00||;False|2025-10-30T23:07:17.6954420+01:00||;True|2025-10-30T22:57:34.5497647+01:00||;True|2025-10-30T18:47:54.0065340+01:00||;True|2025-10-30T00:26:42.2713234+01:00||;False|2025-10-30T00:22:45.6093605+01:00||;True|2025-10-30T00:06:57.3562446+01:00||;</History>
     <LastFailureDetails />
   </PropertyGroup>
   <ItemGroup>
@@ -13,13 +13,13 @@
       <publishTime>01/29/2022 16:04:06</publishTime>
     </File>
     <File Include="appsettings.Development.json">
-      <publishTime>10/23/2025 19:01:34</publishTime>
+      <publishTime>11/04/2025 03:06:55</publishTime>
     </File>
     <File Include="appsettings.json">
-      <publishTime>09/28/2025 01:27:28</publishTime>
+      <publishTime>11/04/2025 03:07:10</publishTime>
     </File>
     <File Include="appsettings.Production.json">
-      <publishTime>10/30/2025 00:23:59</publishTime>
+      <publishTime>11/04/2025 03:07:04</publishTime>
     </File>
     <File Include="ar/Humanizer.resources.dll">
       <publishTime>01/29/2022 16:04:06</publishTime>
@@ -250,16 +250,16 @@
       <publishTime>01/29/2022 16:04:06</publishTime>
     </File>
     <File Include="LoviBackend.deps.json">
-      <publishTime>10/31/2025 00:34:55</publishTime>
+      <publishTime>11/04/2025 14:24:26</publishTime>
     </File>
     <File Include="LoviBackend.dll">
-      <publishTime>10/31/2025 00:34:51</publishTime>
+      <publishTime>11/04/2025 14:24:24</publishTime>
     </File>
     <File Include="LoviBackend.exe">
-      <publishTime>10/31/2025 00:34:51</publishTime>
+      <publishTime>11/04/2025 14:24:24</publishTime>
     </File>
     <File Include="LoviBackend.pdb">
-      <publishTime>10/31/2025 00:34:51</publishTime>
+      <publishTime>11/04/2025 14:24:24</publishTime>
     </File>
     <File Include="LoviBackend.runtimeconfig.json">
       <publishTime>10/28/2025 23:11:53</publishTime>
@@ -673,7 +673,7 @@
       <publishTime>01/29/2022 16:04:12</publishTime>
     </File>
     <File Include="web.config">
-      <publishTime>10/31/2025 00:34:55</publishTime>
+      <publishTime>11/04/2025 14:24:26</publishTime>
     </File>
     <File Include="zh-CN/Humanizer.resources.dll">
       <publishTime>01/29/2022 16:04:12</publishTime>

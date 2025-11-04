@@ -1,4 +1,5 @@
-﻿using LoviBackend.Models.DbSets;
+﻿using LoviBackend.Data;
+using LoviBackend.Models.DbSets;
 using LoviBackend.Models.Dtos;
 using LoviBackend.Models.Dtos.Auth;
 using LoviBackend.Models.Dtos.Pagination;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 using System.Reflection;
 using System.Security.Claims;
 
@@ -16,12 +18,18 @@ namespace LoviBackend.Controllers
     public class UsersController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly ApplicationDbContext _context;
 
         public UsersController(
-            UserManager<ApplicationUser> userManager
+            UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole> roleManager,
+            ApplicationDbContext context
         )
         {
             _userManager = userManager;
+            _roleManager = roleManager;
+            _context = context;
         }
 
         // GET: api/users
@@ -36,7 +44,7 @@ namespace LoviBackend.Controllers
                 Id = user.Id,
                 Email = user.Email!,
                 EmailConfirmed = user.EmailConfirmed,
-                Name = user.Name,
+                Name = user.Name
             }).ToList();
 
             return Ok(userDtos);
@@ -54,12 +62,37 @@ namespace LoviBackend.Controllers
                 return NotFound();
             }
 
+            var roleNames = await _userManager.GetRolesAsync(user);
+            var roleDtos = await _roleManager.Roles
+                .Where(r => roleNames.Contains(r.Name!))
+                .Select((r) => new RoleDto
+                {
+                    Id = r.Id,
+                    Name = r.Name!
+                })
+                .ToListAsync();
+
+            var tokenInfoDtos = await _context.TokenInfos
+                .Where(t => t.UserName == user.UserName)
+                .Select(t => new TokenInfoDto
+                {
+                    Id = t.Id,
+                    UserName = t.UserName,
+                    RefreshToken = t.RefreshToken,
+                    ExpiredAt = t.ExpiredAt,
+                    RefreshedAt = t.RefreshedAt,
+                    DeviceId = t.DeviceId
+                })
+                .ToListAsync();
+
             var userDto = new UserDto
             {
                 Id = user.Id,
                 Email = user.Email!,
                 EmailConfirmed = user.EmailConfirmed,
                 Name = user.Name,
+                Roles = roleDtos,
+                TokenInfos = tokenInfoDtos,
             };
 
             return Ok(userDto);
@@ -82,7 +115,6 @@ namespace LoviBackend.Controllers
                 return NotFound();
             }
 
-            // edit podcast
             if (userDto.NewPassword != null && userDto.NewPassword != "")
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
@@ -231,6 +263,50 @@ namespace LoviBackend.Controllers
             };
 
             return Ok(result);
+        }
+
+        // POST: api/users/5/roles/2
+        [HttpPost("{id}/roles/{roleId}")]
+        public async Task<IActionResult> AddRole(string id, string roleId)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+                return NotFound();
+
+            var role = await _roleManager.FindByIdAsync(roleId);
+            if (role == null)
+                return NotFound();
+
+            if (await _userManager.IsInRoleAsync(user, role.Name!))
+                return BadRequest("User already has role");
+
+            var result = await _userManager.AddToRoleAsync(user, role.Name!);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            return Ok();
+        }
+
+        // DELETE: api/users/5/roles/2
+        [HttpDelete("{id}/roles/{roleId}")]
+        public async Task<IActionResult> RemoveRole(string id, string roleId)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+                return NotFound();
+
+            var role = await _roleManager.FindByIdAsync(roleId);
+            if (role == null)
+                return NotFound();
+
+            if (!await _userManager.IsInRoleAsync(user, role.Name!))
+                return BadRequest("User does not have role");
+
+            var result = await _userManager.RemoveFromRoleAsync(user, role.Name!);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            return Ok();
         }
 
 

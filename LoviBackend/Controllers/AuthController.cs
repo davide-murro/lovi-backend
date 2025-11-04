@@ -233,7 +233,7 @@ namespace LoviBackend.Controllers
                 var newRefreshToken = _tokenService.GenerateRefreshToken();
 
                 tokenInfo.RefreshToken = newRefreshToken; // rotating the refresh token
-                tokenInfo.ExpiredAt = DateTime.UtcNow.AddMonths(int.Parse(_configuration["Jwt:ExpireAfterInMonths"]!));
+                tokenInfo.RefreshedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
                 return Ok(new TokenDto

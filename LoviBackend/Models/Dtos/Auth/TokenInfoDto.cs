@@ -1,10 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace LoviBackend.Models.DbSets
+namespace LoviBackend.Models.Dtos.Auth
 {
-    public class TokenInfo
+    public class TokenInfoDto
     {
-        [Key]
         public int Id { get; set; }
 
         [Required]

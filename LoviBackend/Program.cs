@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,11 +70,17 @@ builder.Services
 builder.Services.AddAuthorization();
 
 // make api kebab-case
-builder.Services.AddControllers(options =>
-{
-    // Inline implementation of IOutboundParameterTransformer
-    options.Conventions.Add(new RouteTokenTransformerConvention(new InlineKebabCaseTransformer()));
-});
+builder.Services
+    .AddControllers(options =>
+    {
+        // Inline implementation of IOutboundParameterTransformer
+        options.Conventions.Add(new RouteTokenTransformerConvention(new InlineKebabCaseTransformer()));
+    })
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        o.JsonSerializerOptions.Converters.Add(new JsonDateTimeUtcConverter());
+    });
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

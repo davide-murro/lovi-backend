@@ -75,7 +75,6 @@ namespace LoviBackend.Controllers
                 return NotFound();
             }
 
-            // edit podcast
             creator.UpdatedAt = DateTime.UtcNow;
             creator.Nickname = creatorDto.Nickname;
             creator.Name = creatorDto.Name;

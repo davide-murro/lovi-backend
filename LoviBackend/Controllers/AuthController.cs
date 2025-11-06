@@ -305,6 +305,17 @@ namespace LoviBackend.Controllers
                 return BadRequest(errors);
             }
 
+            if (await _userManager.FindByEmailAsync(newEmail) != null)
+            {
+                List<IdentityError> errors = new List<IdentityError>();
+                errors.Add(new IdentityError
+                {
+                    Code = "DuplicateEmail",
+                    Description = "Email is already taken."
+                });
+                return BadRequest(errors);
+            }
+
             // Update the newEmail and security stamp using UserManager
             var token = await _userManager.GenerateChangeEmailTokenAsync(user, newEmail);
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));

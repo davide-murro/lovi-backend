@@ -1,6 +1,4 @@
-﻿using LoviBackend.Data;
-using LoviBackend.Models.DbSets;
-using LoviBackend.Models.Dtos.Auth;
+﻿using LoviBackend.Models.Dtos.Auth;
 using LoviBackend.Models.Dtos.Pagination;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;

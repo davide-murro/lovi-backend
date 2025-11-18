@@ -34,7 +34,7 @@ namespace LoviBackend.Services
         }
     }
 
-    // 🐫 kebab-case
+    // 🥙 kebab-case
     class InlineKebabCaseTransformer : IOutboundParameterTransformer
     {
         public string? TransformOutbound(object? value)

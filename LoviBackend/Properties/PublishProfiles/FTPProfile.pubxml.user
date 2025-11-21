@@ -5,7 +5,7 @@
     <TimeStampOfAssociatedLegacyPublishXmlFile />
     <EncryptedPassword>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAWy879aG15USziUJh0dFc3gAAAAACAAAAAAAQZgAAAAEAACAAAAAPFTBvkw9PG8NRd3FVr1Wa/wVhU7XnicQkXypsQfiUhgAAAAAOgAAAAAIAACAAAACllBBB6e/dkcwBMG9FWDtSq2HF2SFIHmNtx17pOZsc9TAAAACxhpDph16/G5hds0wzQNeuJyjo9Htsh4KDkwf7o1vQ0hCyj7akPu1u29VVVcwbzMZAAAAAo3MfABYYAWqiHzDYDHMYKk4vH8KPao5Q28WMHwE6DuYfOw6pxLcbE7RQUKcWIe/aemZ/5aWpnQufunJxp2TarQ==</EncryptedPassword>
     <_PublishTargetUrl>ftp://win6004.site4now.net/lovi</_PublishTargetUrl>
-    <History>True|2025-11-04T13:27:51.1774441Z||;True|2025-10-31T00:43:00.0833393+01:00||;False|2025-10-30T23:21:23.4274514+01:00||;True|2025-10-30T23:17:35.0070866+01:00||;False|2025-10-30T23:13:07.5399222+01:00||;False|2025-10-30T23:07:17.6954420+01:00||;True|2025-10-30T22:57:34.5497647+01:00||;True|2025-10-30T18:47:54.0065340+01:00||;True|2025-10-30T00:26:42.2713234+01:00||;False|2025-10-30T00:22:45.6093605+01:00||;True|2025-10-30T00:06:57.3562446+01:00||;</History>
+    <History>True|2025-11-21T15:29:20.5718927Z||;True|2025-11-21T14:30:06.2598453+01:00||;False|2025-11-21T14:24:07.8946275+01:00||;True|2025-11-04T14:27:51.1774441+01:00||;True|2025-10-31T00:43:00.0833393+01:00||;False|2025-10-30T23:21:23.4274514+01:00||;True|2025-10-30T23:17:35.0070866+01:00||;False|2025-10-30T23:13:07.5399222+01:00||;False|2025-10-30T23:07:17.6954420+01:00||;True|2025-10-30T22:57:34.5497647+01:00||;True|2025-10-30T18:47:54.0065340+01:00||;True|2025-10-30T00:26:42.2713234+01:00||;False|2025-10-30T00:22:45.6093605+01:00||;True|2025-10-30T00:06:57.3562446+01:00||;</History>
     <LastFailureDetails />
   </PropertyGroup>
   <ItemGroup>
@@ -19,7 +19,7 @@
       <publishTime>11/04/2025 03:07:10</publishTime>
     </File>
     <File Include="appsettings.Production.json">
-      <publishTime>11/04/2025 03:07:04</publishTime>
+      <publishTime>11/21/2025 14:24:34</publishTime>
     </File>
     <File Include="ar/Humanizer.resources.dll">
       <publishTime>01/29/2022 16:04:06</publishTime>
@@ -250,19 +250,19 @@
       <publishTime>01/29/2022 16:04:06</publishTime>
     </File>
     <File Include="LoviBackend.deps.json">
-      <publishTime>11/04/2025 14:24:26</publishTime>
+      <publishTime>11/21/2025 16:25:01</publishTime>
     </File>
     <File Include="LoviBackend.dll">
-      <publishTime>11/04/2025 14:24:24</publishTime>
+      <publishTime>11/21/2025 16:24:59</publishTime>
     </File>
     <File Include="LoviBackend.exe">
-      <publishTime>11/04/2025 14:24:24</publishTime>
+      <publishTime>11/21/2025 16:24:59</publishTime>
     </File>
     <File Include="LoviBackend.pdb">
-      <publishTime>11/04/2025 14:24:24</publishTime>
+      <publishTime>11/21/2025 16:24:59</publishTime>
     </File>
     <File Include="LoviBackend.runtimeconfig.json">
-      <publishTime>10/28/2025 23:11:53</publishTime>
+      <publishTime>11/21/2025 16:24:59</publishTime>
     </File>
     <File Include="LoviBackend.staticwebassets.endpoints.json">
       <publishTime>10/28/2025 23:12:20</publishTime>
@@ -271,19 +271,19 @@
       <publishTime>01/29/2022 16:04:06</publishTime>
     </File>
     <File Include="Microsoft.AspNetCore.Authentication.JwtBearer.dll">
-      <publishTime>08/20/2025 10:50:34</publishTime>
+      <publishTime>10/21/2025 01:50:54</publishTime>
     </File>
     <File Include="Microsoft.AspNetCore.Cryptography.Internal.dll">
-      <publishTime>08/20/2025 10:47:46</publishTime>
+      <publishTime>10/21/2025 01:47:50</publishTime>
     </File>
     <File Include="Microsoft.AspNetCore.Cryptography.KeyDerivation.dll">
-      <publishTime>08/20/2025 10:48:10</publishTime>
+      <publishTime>10/21/2025 01:48:16</publishTime>
     </File>
     <File Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll">
-      <publishTime>08/20/2025 10:49:24</publishTime>
+      <publishTime>10/21/2025 01:48:56</publishTime>
     </File>
     <File Include="Microsoft.AspNetCore.OpenApi.dll">
-      <publishTime>08/20/2025 10:50:52</publishTime>
+      <publishTime>10/21/2025 01:51:06</publishTime>
     </File>
     <File Include="Microsoft.AspNetCore.Razor.Language.dll">
       <publishTime>10/19/2023 06:55:12</publishTime>
@@ -337,52 +337,52 @@
       <publishTime>11/07/2024 23:46:58</publishTime>
     </File>
     <File Include="Microsoft.EntityFrameworkCore.Abstractions.dll">
-      <publishTime>08/20/2025 07:25:54</publishTime>
+      <publishTime>10/20/2025 08:38:12</publishTime>
     </File>
     <File Include="Microsoft.EntityFrameworkCore.dll">
-      <publishTime>08/20/2025 07:26:30</publishTime>
+      <publishTime>10/20/2025 08:38:48</publishTime>
     </File>
     <File Include="Microsoft.EntityFrameworkCore.Relational.dll">
-      <publishTime>08/20/2025 07:26:50</publishTime>
+      <publishTime>10/20/2025 08:39:12</publishTime>
     </File>
     <File Include="Microsoft.EntityFrameworkCore.SqlServer.dll">
-      <publishTime>08/20/2025 07:27:06</publishTime>
+      <publishTime>10/20/2025 08:40:24</publishTime>
     </File>
     <File Include="Microsoft.Extensions.Caching.Abstractions.dll">
-      <publishTime>08/20/2025 00:11:44</publishTime>
+      <publishTime>10/18/2025 01:29:16</publishTime>
     </File>
     <File Include="Microsoft.Extensions.Caching.Memory.dll">
-      <publishTime>08/20/2025 00:11:58</publishTime>
+      <publishTime>10/18/2025 01:29:52</publishTime>
     </File>
     <File Include="Microsoft.Extensions.Configuration.Abstractions.dll">
-      <publishTime>08/20/2025 00:11:44</publishTime>
+      <publishTime>10/18/2025 01:29:14</publishTime>
     </File>
     <File Include="Microsoft.Extensions.DependencyInjection.Abstractions.dll">
-      <publishTime>08/20/2025 00:11:20</publishTime>
+      <publishTime>10/18/2025 01:29:16</publishTime>
     </File>
     <File Include="Microsoft.Extensions.DependencyInjection.dll">
-      <publishTime>08/20/2025 00:11:50</publishTime>
+      <publishTime>10/18/2025 01:29:26</publishTime>
     </File>
     <File Include="Microsoft.Extensions.DependencyModel.dll">
-      <publishTime>08/20/2025 00:11:26</publishTime>
+      <publishTime>10/18/2025 01:29:08</publishTime>
     </File>
     <File Include="Microsoft.Extensions.Identity.Core.dll">
-      <publishTime>08/20/2025 10:48:30</publishTime>
+      <publishTime>10/21/2025 01:48:22</publishTime>
     </File>
     <File Include="Microsoft.Extensions.Identity.Stores.dll">
-      <publishTime>08/20/2025 10:48:30</publishTime>
+      <publishTime>10/21/2025 01:48:26</publishTime>
     </File>
     <File Include="Microsoft.Extensions.Logging.Abstractions.dll">
-      <publishTime>08/20/2025 00:11:56</publishTime>
+      <publishTime>10/18/2025 01:29:46</publishTime>
     </File>
     <File Include="Microsoft.Extensions.Logging.dll">
-      <publishTime>08/20/2025 00:11:58</publishTime>
+      <publishTime>10/18/2025 01:29:52</publishTime>
     </File>
     <File Include="Microsoft.Extensions.Options.dll">
-      <publishTime>08/20/2025 00:11:52</publishTime>
+      <publishTime>10/18/2025 01:29:24</publishTime>
     </File>
     <File Include="Microsoft.Extensions.Primitives.dll">
-      <publishTime>08/20/2025 00:11:20</publishTime>
+      <publishTime>10/18/2025 01:29:08</publishTime>
     </File>
     <File Include="Microsoft.Identity.Client.dll">
       <publishTime>06/07/2024 00:09:28</publishTime>
@@ -673,7 +673,7 @@
       <publishTime>01/29/2022 16:04:12</publishTime>
     </File>
     <File Include="web.config">
-      <publishTime>11/04/2025 14:24:26</publishTime>
+      <publishTime>11/21/2025 16:25:01</publishTime>
     </File>
     <File Include="zh-CN/Humanizer.resources.dll">
       <publishTime>01/29/2022 16:04:12</publishTime>

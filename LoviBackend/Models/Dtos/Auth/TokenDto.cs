@@ -6,8 +6,5 @@ namespace LoviBackend.Models.Dtos.Auth
     {
         [Required]
         public string AccessToken { get; set; } = null!;
-
-        [Required]
-        public string RefreshToken { get; set; } = null!;
     }
 }

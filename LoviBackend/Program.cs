@@ -21,6 +21,7 @@ if (allowedOrigins != null && allowedOrigins.Length > 0)
             policy.WithOrigins(allowedOrigins)
                     .AllowAnyHeader()
                     .AllowAnyMethod()
+                    .AllowCredentials()
         )
     );
 }

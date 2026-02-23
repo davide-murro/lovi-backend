@@ -188,14 +188,14 @@ namespace LoviBackend.Controllers
             var expireAt = DateTime.UtcNow.AddMonths(int.Parse(_configuration["Jwt:ExpireAfterInMonths"]!));
             if (tokenInfo == null)
             {
-                var ti = new TokenInfo
+                tokenInfo = new TokenInfo
                 {
                     UserName = user.UserName!,
                     RefreshToken = refreshToken,
                     ExpiredAt = expireAt,
                     DeviceId = deviceId
                 };
-                _context.TokenInfos.Add(ti);
+                _context.TokenInfos.Add(tokenInfo);
             }
             // Else, update the refresh token and expiration
             else
@@ -206,40 +206,84 @@ namespace LoviBackend.Controllers
 
             await _context.SaveChangesAsync();
 
+            // set refresh token cookie
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = _hostingEnvironment.IsDevelopment() ? SameSiteMode.None : SameSiteMode.Strict,
+                Path = "/",
+                Expires = tokenInfo.ExpiredAt
+            };
+            Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+
             return Ok(new TokenDto
             {
-                AccessToken = token,
-                RefreshToken = refreshToken
+                AccessToken = token
             });
         }
 
         [HttpPost("refresh")]
-        public async Task<IActionResult> Refresh(TokenDto dto, [FromHeader(Name = "X-DeviceId")] string deviceId)
+        public async Task<IActionResult> Refresh([FromHeader(Name = "X-DeviceId")] string deviceId)
         {
             try
             {
-                var principal = _tokenService.GetPrincipalFromExpiredToken(dto.AccessToken);
-                var userName = principal.Identity!.Name;
+                if (string.IsNullOrEmpty(deviceId))
+                    return BadRequest("Device ID is required.");
 
-                var tokenInfo = _context.TokenInfos.SingleOrDefault(t => t.UserName == userName && t.DeviceId == deviceId);
-                if (tokenInfo == null
-                    || tokenInfo.RefreshToken != dto.RefreshToken
-                    || tokenInfo.ExpiredAt <= DateTime.UtcNow)
+                var refreshToken = Request.Cookies["refreshToken"];
+                if (string.IsNullOrEmpty(refreshToken))
+                    return BadRequest("Missing refresh token.");
+
+                var tokenInfo = await _context.TokenInfos
+                    .SingleOrDefaultAsync(t =>
+                        t.RefreshToken == refreshToken &&
+                        t.DeviceId == deviceId);
+
+                if (tokenInfo == null || tokenInfo.ExpiredAt <= DateTime.UtcNow)
+                    return Unauthorized("Invalid refresh token.");
+
+                // Get user
+                var user = await _userManager.FindByNameAsync(tokenInfo.UserName);
+                if (user == null)
+                    return Unauthorized();
+
+                // Create fresh claims
+                var roles = await _userManager.GetRolesAsync(user);
+
+                // create claims
+                var claims = new List<Claim>
                 {
-                    return BadRequest("Invalid refresh token. Please login again.");
-                }
+                    new Claim(ClaimTypes.Name, user.UserName!),
+                    new Claim(ClaimTypes.NameIdentifier, user.Id),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                };
 
-                var newAccessToken = _tokenService.GenerateAccessToken(principal.Claims);
+                foreach (var role in roles)
+                    claims.Add(new Claim(ClaimTypes.Role, role));
+
+                // generate tokens
+                var newAccessToken = _tokenService.GenerateAccessToken(claims);
                 var newRefreshToken = _tokenService.GenerateRefreshToken();
 
                 tokenInfo.RefreshToken = newRefreshToken; // rotating the refresh token
                 tokenInfo.RefreshedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
+                // set refresh token cookie
+                var cookieOptions = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = _hostingEnvironment.IsDevelopment() ? SameSiteMode.None : SameSiteMode.Strict,
+                    Path = "/",
+                    Expires = tokenInfo.ExpiredAt
+                };
+                Response.Cookies.Append("refreshToken", newRefreshToken, cookieOptions);
+
                 return Ok(new TokenDto
                 {
-                    AccessToken = newAccessToken,
-                    RefreshToken = newRefreshToken
+                    AccessToken = newAccessToken
                 });
             }
             catch (Exception)
@@ -254,16 +298,67 @@ namespace LoviBackend.Controllers
         {
             try
             {
+                if (string.IsNullOrEmpty(deviceId))
+                    return BadRequest("Device ID is required.");
+
+                var userName = User.Identity!.Name;
+
+                var tokenInfo = await _context.TokenInfos.SingleOrDefaultAsync(t => t.UserName == userName && t.DeviceId == deviceId);
+                if (tokenInfo == null)
+                {
+                    return BadRequest("Token not found for this device.");
+                }
+
+                _context.TokenInfos.Remove(tokenInfo);
+                await _context.SaveChangesAsync();
+
+                // Delete the refresh token cookie so browser no longer sends it
+                var deleteCookieOptions = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = _hostingEnvironment.IsDevelopment() ? SameSiteMode.None : SameSiteMode.Strict,
+                    Path = "/",
+                    Expires = DateTime.UtcNow.AddDays(-1)
+                };
+                Response.Cookies.Delete("refreshToken", deleteCookieOptions);
+
+                return Ok(true);
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        // Revoke all refresh tokens for the current user (all devices)
+        [HttpPost("revoke-all")]
+        [Authorize]
+        public async Task<IActionResult> RevokeAll()
+        {
+            try
+            {
                 var userName = User.Identity!.Name;
 
                 var tokenInfos = await _context.TokenInfos.Where(u => u.UserName == userName).ToListAsync();
-                if (tokenInfos.Count() == 0)
+                if (tokenInfos.Count == 0)
                 {
                     return BadRequest("Tokens not found for this user.");
                 }
 
                 _context.TokenInfos.RemoveRange(tokenInfos);
                 await _context.SaveChangesAsync();
+
+                // Delete the refresh token cookie so browser no longer sends it
+                var deleteCookieOptions = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = _hostingEnvironment.IsDevelopment() ? SameSiteMode.None : SameSiteMode.Strict,
+                    Path = "/",
+                    Expires = DateTime.UtcNow.AddDays(-1)
+                };
+                Response.Cookies.Delete("refreshToken", deleteCookieOptions);
 
                 return Ok(true);
             }

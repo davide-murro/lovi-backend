@@ -11,6 +11,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace LoviBackend.Controllers
 {
@@ -24,6 +26,7 @@ namespace LoviBackend.Controllers
         private readonly ITokenService _tokenService;
         private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _hostingEnvironment;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public AuthController(
             ApplicationDbContext context,
@@ -31,7 +34,8 @@ namespace LoviBackend.Controllers
             RoleManager<IdentityRole> roleManager,
             ITokenService tokenService,
             IConfiguration configuration,
-            IWebHostEnvironment hostingEnvironment
+            IWebHostEnvironment hostingEnvironment,
+            IHttpClientFactory httpClientFactory
         )
         {
             _context = context;
@@ -40,6 +44,7 @@ namespace LoviBackend.Controllers
             _tokenService = tokenService;
             _configuration = configuration;
             _hostingEnvironment = hostingEnvironment;
+            _httpClientFactory = httpClientFactory;
         }
 
         [HttpPost("register")]
@@ -221,6 +226,186 @@ namespace LoviBackend.Controllers
             {
                 AccessToken = token
             });
+        }
+
+        [HttpPost("external-login")]
+        public async Task<IActionResult> ExternalLogin([FromBody] ExternalLoginDto dto, [FromHeader(Name = "X-DeviceId")] string deviceId)
+        {
+            if (dto == null || string.IsNullOrEmpty(dto.Provider) || string.IsNullOrEmpty(dto.AccessToken))
+                return BadRequest("Provider and access token are required.");
+
+            if (string.IsNullOrEmpty(deviceId))
+                return BadRequest("Device ID is required.");
+
+            var provider = dto.Provider.ToLowerInvariant();
+            string? email = null;
+            string? name = null;
+            string? providerUserId = null;
+
+            var client = _httpClientFactory.CreateClient();
+
+            try
+            {
+                switch (provider)
+                {
+                    case "google":
+                    {
+                        var req = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v3/userinfo");
+                        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", dto.AccessToken);
+                        var res = await client.SendAsync(req);
+                        if (!res.IsSuccessStatusCode)
+                            return BadRequest("Invalid Google token.");
+
+                        var payload = await res.Content.ReadAsStringAsync();
+                        using var doc = JsonDocument.Parse(payload);
+                        var root = doc.RootElement;
+                        email = root.TryGetProperty("email", out var e) ? e.GetString() : null;
+                        name = root.TryGetProperty("name", out var n) ? n.GetString() : null;
+                        providerUserId = root.TryGetProperty("sub", out var s) ? s.GetString() : null;
+                        break;
+                    }
+                    case "spotify":
+                    {
+                        var req = new HttpRequestMessage(HttpMethod.Get, "https://api.spotify.com/v1/me");
+                        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", dto.AccessToken);
+                        var res = await client.SendAsync(req);
+                        if (!res.IsSuccessStatusCode)
+                            return BadRequest("Invalid Spotify token.");
+
+                        var payload = await res.Content.ReadAsStringAsync();
+                        using var doc = JsonDocument.Parse(payload);
+                        var root = doc.RootElement;
+                        providerUserId = root.TryGetProperty("id", out var spid) ? spid.GetString() : null;
+                        name = root.TryGetProperty("display_name", out var d) ? d.GetString() : null;
+                        email = root.TryGetProperty("email", out var em) ? em.GetString() : null;
+                        break;
+                    }
+                    case "facebook":
+                    {
+                        var fbUrl = $"https://graph.facebook.com/me?fields=id,name,email&access_token={Uri.EscapeDataString(dto.AccessToken)}";
+                        var res = await client.GetAsync(fbUrl);
+                        if (!res.IsSuccessStatusCode)
+                            return BadRequest("Invalid Facebook token.");
+
+                        var payload = await res.Content.ReadAsStringAsync();
+                        using var doc = JsonDocument.Parse(payload);
+                        var root = doc.RootElement;
+                        providerUserId = root.TryGetProperty("id", out var idp) ? idp.GetString() : null;
+                        name = root.TryGetProperty("name", out var nn) ? nn.GetString() : null;
+                        email = root.TryGetProperty("email", out var ee) ? ee.GetString() : null;
+                        break;
+                    }
+                    case "instagram":
+                    {
+                        // Instagram Graph API (Basic Display) does not return email. Require email for account creation.
+                        var igUrl = $"https://graph.instagram.com/me?fields=id,username&access_token={Uri.EscapeDataString(dto.AccessToken)}";
+                        var res = await client.GetAsync(igUrl);
+                        if (!res.IsSuccessStatusCode)
+                            return BadRequest("Invalid Instagram token.");
+
+                        var payload = await res.Content.ReadAsStringAsync();
+                        using var doc = JsonDocument.Parse(payload);
+                        var root = doc.RootElement;
+                        providerUserId = root.TryGetProperty("id", out var igid) ? igid.GetString() : null;
+                        name = root.TryGetProperty("username", out var igu) ? igu.GetString() : null;
+
+                        // Instagram won't provide email via this API. Require client to provide email if needed.
+                        return BadRequest("Instagram login requires an email which is not provided by Instagram Basic Display API.");
+                    }
+                    default:
+                        return BadRequest("Unsupported external provider.");
+                }
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+
+            if (string.IsNullOrEmpty(email))
+                return BadRequest("External provider did not return an email address.");
+
+            if (string.IsNullOrEmpty(providerUserId))
+                return BadRequest("External provider did not return a provider user id.");
+
+            // Find or create local user
+            var user = await _userManager.FindByEmailAsync(email!);
+            if (user == null)
+            {
+                user = new ApplicationUser
+                {
+                    UserName = email,
+                    Email = email,
+                    Name = name ?? "",
+                    EmailConfirmed = true
+                };
+
+                var createResult = await _userManager.CreateAsync(user);
+                if (!createResult.Succeeded)
+                    return BadRequest(createResult.Errors);
+            }
+
+            // Link external login
+            var userExisting = await _userManager.FindByLoginAsync(dto.Provider, providerUserId); 
+            if (userExisting != null && userExisting.Id != user.Id)
+                return BadRequest("This external account is already linked to a different user.");
+            if (userExisting == null)
+            {
+                var loginInfo = new UserLoginInfo(dto.Provider, providerUserId, dto.Provider);
+                var addLogin = await _userManager.AddLoginAsync(user, loginInfo);
+                if (!addLogin.Succeeded)
+                    return BadRequest(addLogin.Errors);
+            }
+
+            // Update last login
+            user.LoggedInAt = DateTime.UtcNow;
+            await _userManager.UpdateAsync(user);
+
+            // create claims and tokens (same as login)
+            var roles = await _userManager.GetRolesAsync(user);
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.UserName!),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.Id)
+            };
+            foreach (var role in roles)
+                claims.Add(new Claim(ClaimTypes.Role, role));
+
+            var accessToken = _tokenService.GenerateAccessToken(claims);
+            var refreshToken = _tokenService.GenerateRefreshToken();
+
+            // persist refresh token
+            var tokenInfo = _context.TokenInfos.FirstOrDefault(t => t.UserName == user.UserName && t.DeviceId == deviceId);
+            var expireAt = DateTime.UtcNow.AddMonths(int.Parse(_configuration["Jwt:ExpireAfterInMonths"]!));
+            if (tokenInfo == null)
+            {
+                tokenInfo = new TokenInfo
+                {
+                    UserName = user.UserName!,
+                    RefreshToken = refreshToken,
+                    ExpiredAt = expireAt,
+                    DeviceId = deviceId
+                };
+                _context.TokenInfos.Add(tokenInfo);
+            }
+            else
+            {
+                tokenInfo.RefreshToken = refreshToken;
+                tokenInfo.ExpiredAt = expireAt;
+            }
+            await _context.SaveChangesAsync();
+
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = _hostingEnvironment.IsDevelopment() ? SameSiteMode.None : SameSiteMode.Strict,
+                Path = "/",
+                Expires = tokenInfo.ExpiredAt
+            };
+            Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+
+            return Ok(new TokenDto { AccessToken = accessToken });
         }
 
         [HttpPost("refresh")]

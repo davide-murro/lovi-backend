@@ -32,6 +32,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(defaultConnection)
 );
 
+// HttpClient factory for external provider calls
+builder.Services.AddHttpClient();
+
 // identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {

@@ -56,8 +56,8 @@ nunit-*.xml
 # Visual Studio
 .vs/*
 
-# production settings
-appsettings.Production.json
+# appsettings
+appsettings.*.json
 
 # uploads
 uploads/

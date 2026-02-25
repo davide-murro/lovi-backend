@@ -8,10 +8,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
-using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace LoviBackend.Controllers
@@ -27,6 +27,8 @@ namespace LoviBackend.Controllers
         private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _hostingEnvironment;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IEmailService _emailService;
+        private readonly ICookieService _cookieService;
 
         public AuthController(
             ApplicationDbContext context,
@@ -35,7 +37,9 @@ namespace LoviBackend.Controllers
             ITokenService tokenService,
             IConfiguration configuration,
             IWebHostEnvironment hostingEnvironment,
-            IHttpClientFactory httpClientFactory
+            IHttpClientFactory httpClientFactory,
+            IEmailService emailService,
+            ICookieService cookieService
         )
         {
             _context = context;
@@ -45,6 +49,8 @@ namespace LoviBackend.Controllers
             _configuration = configuration;
             _hostingEnvironment = hostingEnvironment;
             _httpClientFactory = httpClientFactory;
+            _emailService = emailService;
+            _cookieService = cookieService;
         }
 
         [HttpPost("register")]
@@ -66,19 +72,15 @@ namespace LoviBackend.Controllers
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
-            // Build callback URL (frontend route)
-            var callbackUrl = $"{_hostingEnvironment.ContentRootPath}/auth/confirm-email?userId={user.Id}&token={encodedToken}";
-
-            /*
-            // Send confirmation newEmail
+            // Send confirmation email
+            var callbackUrl = $"{_configuration["App:BaseUrl"]}/auth/confirm-email?userId={user.Id}&token={encodedToken}";
             await _emailService.SendEmailAsync(
                 user.Email,
                 "Confirm your LOVI account",
-                $"Welcome, {user.DisplayName}!<br><br>" +
-                $"Please confirm your newEmail by clicking this link:<br>" +
-                $"<a href='{callbackUrl}'>Confirm Email</a>"
+                $"Welcome, {user.Name}!<br><br>" +
+                $"Please confirm your account by clicking this link:<br><br>" +
+                $"<a href='{callbackUrl}'>{callbackUrl}</a>"
             );
-            */
 
             return NoContent();
         }
@@ -93,11 +95,31 @@ namespace LoviBackend.Controllers
             if (user == null)
                 return NotFound("User not found.");
 
+            if (await _userManager.IsEmailConfirmedAsync(user))
+            {
+                List<IdentityError> errors = new List<IdentityError>();
+                errors.Add(new IdentityError
+                {
+                    Code = "EmailAlreadyConfirmed",
+                    Description = "The email is already confirmed."
+                });
+                return BadRequest(errors);
+            }
+
             var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Token));
             var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
 
             if (!result.Succeeded)
                 return BadRequest(result.Errors);
+
+            // Send confirmation email
+            await _emailService.SendEmailAsync(
+                user.Email!,
+                "Welcome to LOVI",
+                $"Hi {user.Name}!<br><br>" +
+                $"Your account has been successfully created. welcome to <a href='https://lovi.media'>LOVI</a>.<br><br>" +
+                $"You can now start exploring everything we have to offer."
+            );
 
             return NoContent();
         }
@@ -112,23 +134,30 @@ namespace LoviBackend.Controllers
             if (user == null)
                 return NotFound("User not found.");
 
+            if (await _userManager.IsEmailConfirmedAsync(user))
+            {
+                List<IdentityError> errors = new List<IdentityError>();
+                errors.Add(new IdentityError
+                {
+                    Code = "EmailAlreadyConfirmed",
+                    Description = "The email is already confirmed."
+                });
+                return BadRequest(errors);
+            }
+
             // Generate confirmation token
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
-            // Build callback URL (frontend route)
-            var callbackUrl = $"{_hostingEnvironment.ContentRootPath}/auth/confirm-email?userId={user.Id}&token={encodedToken}";
-
-            /*
-            // Send confirmation newEmail
+            // Send confirmation email
+            var callbackUrl = $"{_configuration["App:BaseUrl"]}/auth/confirm-email?userId={user.Id}&token={encodedToken}";
             await _emailService.SendEmailAsync(
-                user.Email,
+                user.Email!,
                 "Confirm your LOVI account",
-                $"Welcome, {user.DisplayName}!<br><br>" +
-                $"Please confirm your newEmail by clicking this link:<br>" +
-                $"<a href='{callbackUrl}'>Confirm Email</a>"
+                $"Welcome, {user.Name}!<br><br>" +
+                $"Please confirm your account by clicking this link:<br><br>" +
+                $"<a href='{callbackUrl}'>{callbackUrl}</a>"
             );
-            */
 
             return NoContent();
         }
@@ -211,16 +240,8 @@ namespace LoviBackend.Controllers
 
             await _context.SaveChangesAsync();
 
-            // set refresh token cookie
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = _hostingEnvironment.IsDevelopment() ? SameSiteMode.None : SameSiteMode.Strict,
-                Path = "/",
-                Expires = tokenInfo.ExpiredAt
-            };
-            Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+            // set refresh token cookie via cookie service
+            _cookieService.Append(Response, "refreshToken", refreshToken, tokenInfo.ExpiredAt);
 
             return Ok(new TokenDto
             {
@@ -342,6 +363,31 @@ namespace LoviBackend.Controllers
                 var createResult = await _userManager.CreateAsync(user);
                 if (!createResult.Succeeded)
                     return BadRequest(createResult.Errors);
+
+                // Send confirmation email
+                await _emailService.SendEmailAsync(
+                    user.Email!,
+                    "Welcome to LOVI",
+                    $"Hi {user.Name}!<br><br>" +
+                    $"Your account has been successfully created. welcome to <a href=\"www.lovi.media\">LOVI</a>.<br><br>" +
+                    $"You can now start exploring everything we have to offer."
+                );
+            } else if(!await _userManager.IsEmailConfirmedAsync(user))
+            {
+                user.EmailConfirmed = true;
+
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                    return BadRequest(result.Errors);
+
+                // Send confirmation email
+                await _emailService.SendEmailAsync(
+                    user.Email!,
+                    "Welcome to LOVI",
+                    $"Hi {user.Name}!<br><br>" +
+                    $"Your account has been successfully created. welcome to <a href=\"www.lovi.media\">LOVI</a>.<br><br>" +
+                    $"You can now start exploring everything we have to offer."
+                );
             }
 
             // Link external login
@@ -395,15 +441,8 @@ namespace LoviBackend.Controllers
             }
             await _context.SaveChangesAsync();
 
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = _hostingEnvironment.IsDevelopment() ? SameSiteMode.None : SameSiteMode.Strict,
-                Path = "/",
-                Expires = tokenInfo.ExpiredAt
-            };
-            Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+            // set refresh token cookie via cookie service
+            _cookieService.Append(Response, "refreshToken", refreshToken, tokenInfo.ExpiredAt);
 
             return Ok(new TokenDto { AccessToken = accessToken });
         }
@@ -416,7 +455,7 @@ namespace LoviBackend.Controllers
                 if (string.IsNullOrEmpty(deviceId))
                     return BadRequest("Device ID is required.");
 
-                var refreshToken = Request.Cookies["refreshToken"];
+                var refreshToken = _cookieService.Read(Request, "refreshToken");
                 if (string.IsNullOrEmpty(refreshToken))
                     return BadRequest("Missing refresh token.");
 
@@ -455,16 +494,8 @@ namespace LoviBackend.Controllers
                 tokenInfo.RefreshedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
-                // set refresh token cookie
-                var cookieOptions = new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = _hostingEnvironment.IsDevelopment() ? SameSiteMode.None : SameSiteMode.Strict,
-                    Path = "/",
-                    Expires = tokenInfo.ExpiredAt
-                };
-                Response.Cookies.Append("refreshToken", newRefreshToken, cookieOptions);
+                // set refresh token cookie via cookie service
+                _cookieService.Append(Response, "refreshToken", newRefreshToken, tokenInfo.ExpiredAt);
 
                 return Ok(new TokenDto
                 {
@@ -498,15 +529,7 @@ namespace LoviBackend.Controllers
                 await _context.SaveChangesAsync();
 
                 // Delete the refresh token cookie so browser no longer sends it
-                var deleteCookieOptions = new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = _hostingEnvironment.IsDevelopment() ? SameSiteMode.None : SameSiteMode.Strict,
-                    Path = "/",
-                    Expires = DateTime.UtcNow.AddDays(-1)
-                };
-                Response.Cookies.Delete("refreshToken", deleteCookieOptions);
+                _cookieService.Delete(Response, "refreshToken");
 
                 return Ok(true);
             }
@@ -535,15 +558,7 @@ namespace LoviBackend.Controllers
                 await _context.SaveChangesAsync();
 
                 // Delete the refresh token cookie so browser no longer sends it
-                var deleteCookieOptions = new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = _hostingEnvironment.IsDevelopment() ? SameSiteMode.None : SameSiteMode.Strict,
-                    Path = "/",
-                    Expires = DateTime.UtcNow.AddDays(-1)
-                };
-                Response.Cookies.Delete("refreshToken", deleteCookieOptions);
+                _cookieService.Delete(Response, "refreshToken");
 
                 return Ok(true);
             }
@@ -600,20 +615,22 @@ namespace LoviBackend.Controllers
             var token = await _userManager.GenerateChangeEmailTokenAsync(user, newEmail);
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
-            var callbackUrl = $"{_hostingEnvironment.ContentRootPath}/auth/confirm-change-email?userId={id}&newEmail={newEmail}&token={encodedToken}";
+            var callbackUrl = $"{_configuration["App:BaseUrl"]}/auth/confirm-change-email?userId={id}&newEmail={newEmail}&token={encodedToken}";
 
-            /*
+            // Notify current email about change attempt
             await _emailService.SendEmailAsync(
-                currentEmail,
+                currentEmail!,
                 "Email Address Changing",
-                $"Your newEmail address on LOVI it s about to change from {currentEmail} to {newEmail}. If this wasn't you, please contact support."
+                $"Your email address on LOVI is about to change from {currentEmail} to {newEmail}. If this wasn't you, please contact support."
             );
+
+            // Send confirmation to the new email
             await _emailService.SendEmailAsync(
                 newEmail,
                 "Confirm Your New Email",
-                $"Please confirm your new email address by clicking here: <a href='{callbackUrl}'>Confirm Email</a>"
+                $"Please confirm your new email address by clicking here:<br><br>" +
+                $"<a href='{callbackUrl}'>{callbackUrl}</a>"
             );
-            */
 
             return NoContent();
         }
@@ -640,18 +657,17 @@ namespace LoviBackend.Controllers
             await _userManager.SetUserNameAsync(user, newEmail);
             await _userManager.UpdateSecurityStampAsync(user);
 
-            /*
+            // Notify both old and new emails about the change
             await _emailService.SendEmailAsync(
                 currentEmail,
                 "Email Address Changed",
-                $"Your newEmail address on LOVI has been changed from {currentEmail} to {newEmail}. If this wasn't you, please contact support."
+                $"Your email address on LOVI has been changed from {currentEmail} to {newEmail}. If this wasn't you, please contact support."
             );
             await _emailService.SendEmailAsync(
                 newEmail,
                 "Email Address Changed",
-                $"Your newEmail address on LOVI has been changed from {currentEmail} to {newEmail}. If this wasn't you, please contact support."
+                $"Your email address on LOVI has been changed from {currentEmail} to {newEmail}. If this wasn't you, please contact support."
             );
-            */
 
             return NoContent();
         }
@@ -683,12 +699,12 @@ namespace LoviBackend.Controllers
             // 2. Update security stamp (optional, but good practice to invalidate old tokens)
             await _userManager.UpdateSecurityStampAsync(user);
 
-            /*// 3. Send confirmation newEmail
+            // 3. Send confirmation email
             await _emailService.SendEmailAsync(
-                user.Email,
+                user.Email!,
                 "Password Changed Successfully",
                 "Your account password has been successfully updated. If you did not make this change, please contact support immediately."
-            );*/
+            );
 
             return NoContent();
         }
@@ -724,18 +740,15 @@ namespace LoviBackend.Controllers
             var encodedEmail = UrlEncoder.Default.Encode(user.Email!); // Use newEmail for simplicity in routing
 
             // 3. Construct the Reset URL pointing to your Angular app
-            // The Angular route should look something like: /auth/forgot-password?email=...&token=...
-            var callbackUrl = $"{_hostingEnvironment.ContentRootPath}/auth/forgot-password?email={encodedEmail}&token={encodedToken}";
+            var callbackUrl = $"{_configuration["App:BaseUrl"]}/auth/forgot-password?email={encodedEmail}&token={encodedToken}";
 
-            /*// 4. Send the Email
-            var subject = "Password Reset Request";
-            var body = $"Please reset your password by clicking here: <a href='{callbackUrl}'>Reset Password</a>";
-
+            // 4. Send the Email
             await _emailService.SendEmailAsync(
-                user.Email,
-                subject,
-                body
-            );*/
+                user.Email!,
+                "Password Reset Request",
+                $"Please reset your password by clicking here:<br><br>" +
+                $"<a href='{callbackUrl}'>{callbackUrl}</a>"
+            );
 
             // 5. Return success (or NoContent)
             return NoContent();
@@ -770,13 +783,12 @@ namespace LoviBackend.Controllers
 
             if (result.Succeeded)
             {
-                /*
-                // Optional: Send confirmation newEmail
+                // Optional: Send confirmation email
                 await _emailService.SendEmailAsync(
-                    user.Email,
+                    user.Email!,
                     "Password Reset Confirmed",
                     "Your password has been successfully reset. You can now log in with your new password."
-                );*/
+                );
                 return NoContent();
             }
 

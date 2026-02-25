@@ -6,6 +6,5 @@ namespace LoviBackend.Services
     {
         string GenerateAccessToken(IEnumerable<Claim> claims);
         string GenerateRefreshToken();
-        ClaimsPrincipal GetPrincipalFromExpiredToken(string accessToken);
     }
 }

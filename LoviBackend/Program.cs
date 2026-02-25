@@ -45,6 +45,11 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 // Jwt
 builder.Services.AddScoped<ITokenService, TokenService>();
+// Email service
+builder.Services.AddTransient<IEmailService, EmailService>();
+// Cookie service
+builder.Services.AddSingleton<ICookieService, CookieService>();
+
 builder.Services
     .AddAuthentication(options =>
     {

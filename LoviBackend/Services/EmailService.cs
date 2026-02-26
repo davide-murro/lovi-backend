@@ -23,7 +23,7 @@ namespace LoviBackend.Services
             var enableSsl = Convert.ToBoolean(section["EnableSsl"]);
 
             using var message = new MailMessage();
-            message.From = new MailAddress(from!);
+            message.From = new MailAddress(from!, "LOVI");
             message.To.Add(new MailAddress(to));
             message.Subject = subject;
 
@@ -39,6 +39,8 @@ namespace LoviBackend.Services
             if (!string.IsNullOrEmpty(username))
             {
                 client.Credentials = new NetworkCredential(username, password);
+                // set sender/envelope-from with display name
+                message.Sender = new MailAddress(username, "LOVI");
             }
 
             await client.SendMailAsync(message);

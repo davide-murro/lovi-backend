@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Security.Claims;
@@ -56,6 +57,19 @@ namespace LoviBackend.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
+            // check user
+            var userExists = await _userManager.FindByEmailAsync(dto.Email);
+            if (userExists != null && !await _userManager.IsEmailConfirmedAsync(userExists))
+            {
+                List<IdentityError> errors = new List<IdentityError>();
+                errors.Add(new IdentityError
+                {
+                    Code = "EmailNotConfirmed",
+                    Description = "The email is not confirmed."
+                });
+                return BadRequest(errors);
+            }
+
             // save user
             var user = new ApplicationUser
             {
@@ -79,7 +93,7 @@ namespace LoviBackend.Controllers
                 "Confirm your LOVI account",
                 $"Welcome, {user.Name}!<br><br>" +
                 $"Please confirm your account by clicking this link:<br><br>" +
-                $"<a href='{callbackUrl}'>{callbackUrl}</a>"
+                $"<a href='{callbackUrl}'>Confirm LOVI account</a>"
             );
 
             return NoContent();
@@ -156,7 +170,7 @@ namespace LoviBackend.Controllers
                 "Confirm your LOVI account",
                 $"Welcome, {user.Name}!<br><br>" +
                 $"Please confirm your account by clicking this link:<br><br>" +
-                $"<a href='{callbackUrl}'>{callbackUrl}</a>"
+                $"<a href='{callbackUrl}'>Confirm LOVI account</a>"
             );
 
             return NoContent();
@@ -173,12 +187,8 @@ namespace LoviBackend.Controllers
 
             // check user
             var user = await _userManager.FindByNameAsync(dto.UserName);
-            if (user == null || (await _userManager.CheckPasswordAsync(user, dto.Password)) == false)
-            {
-                return Unauthorized("Invalid login");
-            }
 
-            if (!await _userManager.IsEmailConfirmedAsync(user))
+            if (user != null && !await _userManager.IsEmailConfirmedAsync(user))
             {
                 List<IdentityError> errors = new List<IdentityError>();
                 errors.Add(new IdentityError
@@ -188,6 +198,12 @@ namespace LoviBackend.Controllers
                 });
                 return BadRequest(errors);
             }
+
+            if (user == null || (await _userManager.CheckPasswordAsync(user, dto.Password)) == false)
+            {
+                return Unauthorized("Invalid login");
+            }
+
 
             // save login
             user.LoggedInAt = DateTime.UtcNow;
@@ -615,8 +631,6 @@ namespace LoviBackend.Controllers
             var token = await _userManager.GenerateChangeEmailTokenAsync(user, newEmail);
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
-            var callbackUrl = $"{_configuration["App:BaseUrl"]}/auth/confirm-change-email?userId={id}&newEmail={newEmail}&token={encodedToken}";
-
             // Notify current email about change attempt
             await _emailService.SendEmailAsync(
                 currentEmail!,
@@ -625,11 +639,12 @@ namespace LoviBackend.Controllers
             );
 
             // Send confirmation to the new email
+            var callbackUrl = $"{_configuration["App:BaseUrl"]}/auth/confirm-change-email?userId={id}&newEmail={newEmail}&token={encodedToken}";
             await _emailService.SendEmailAsync(
                 newEmail,
                 "Confirm Your New Email",
                 $"Please confirm your new email address by clicking here:<br><br>" +
-                $"<a href='{callbackUrl}'>{callbackUrl}</a>"
+                $"<a href='{callbackUrl}'>Confirm new Email</a>"
             );
 
             return NoContent();
@@ -723,9 +738,20 @@ namespace LoviBackend.Controllers
 
             var user = await _userManager.FindByEmailAsync(email);
 
+            if (user != null && !await _userManager.IsEmailConfirmedAsync(user))
+            {
+                List<IdentityError> errors = new List<IdentityError>();
+                errors.Add(new IdentityError
+                {
+                    Code = "EmailNotConfirmed",
+                    Description = "The email is not confirmed."
+                });
+                return BadRequest(errors);
+            }
+
             // SECURITY NOTE: Always return 204/200 OK even if the user is not found.
             // This prevents an attacker from enumerating valid user emails.
-            if (user == null || !(await _userManager.IsEmailConfirmedAsync(user)))
+            if (user == null)
             {
                 // Log the attempt (optional)
                 return NoContent();
@@ -747,7 +773,7 @@ namespace LoviBackend.Controllers
                 user.Email!,
                 "Password Reset Request",
                 $"Please reset your password by clicking here:<br><br>" +
-                $"<a href='{callbackUrl}'>{callbackUrl}</a>"
+                $"<a href='{callbackUrl}'>Reset Password</a>"
             );
 
             // 5. Return success (or NoContent)
@@ -821,8 +847,14 @@ namespace LoviBackend.Controllers
 
             if (result.Succeeded)
             {
+                // Send confirmation email
+                await _emailService.SendEmailAsync(
+                    user.Email!,
+                    "Account Successfully Deleted",
+                    "Your account has been successfully deleted. Thank you for being with us."
+                );
+
                 // Note: After deletion, the client must also log out (clear the JWT).
-                // This is handled on the Angular side.
                 return NoContent(); // HTTP 204: Success, no content to return
             }
 

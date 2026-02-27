@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Security.Claims;
@@ -55,7 +54,7 @@ namespace LoviBackend.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+        public async Task<IActionResult> Register([FromBody] RegisterDto dto, [FromHeader(Name = "X-Locale")] string localeId)
         {
             // check user
             var userExists = await _userManager.FindByEmailAsync(dto.Email);
@@ -87,7 +86,8 @@ namespace LoviBackend.Controllers
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
             // Send confirmation email
-            var callbackUrl = $"{_configuration["App:BaseUrl"]}/auth/confirm-email?userId={user.Id}&token={encodedToken}";
+            var localePath = bool.TryParse(_configuration["App:UseLocaleInUrl"], out bool loc) ? $"/{localeId}" : "";
+            var callbackUrl = $"{_configuration["App:BaseUrl"]}{localePath}/auth/confirm-email?userId={user.Id}&token={encodedToken}";
             await _emailService.SendEmailAsync(
                 user.Email,
                 "Confirm your LOVI account",
@@ -131,7 +131,7 @@ namespace LoviBackend.Controllers
                 user.Email!,
                 "Welcome to LOVI",
                 $"Hi {user.Name}!<br><br>" +
-                $"Your account has been successfully created. welcome to <a href='https://lovi.media'>LOVI</a>.<br><br>" +
+                $"Your account has been successfully created. welcome to <a href=\"{_configuration["App:BaseUrl"]}\">LOVI</a>.<br><br>" +
                 $"You can now start exploring everything we have to offer."
             );
 
@@ -139,7 +139,7 @@ namespace LoviBackend.Controllers
         }
 
         [HttpPost("resend-confirm-email")]
-        public async Task<IActionResult> ResendConfirmEmail(ResendConfirmEmailDto model)
+        public async Task<IActionResult> ResendConfirmEmail(ResendConfirmEmailDto model, [FromHeader(Name = "X-Locale")] string localeId)
         {
             if (string.IsNullOrEmpty(model.Email))
                 return BadRequest("Invalid parameters.");
@@ -164,7 +164,8 @@ namespace LoviBackend.Controllers
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
             // Send confirmation email
-            var callbackUrl = $"{_configuration["App:BaseUrl"]}/auth/confirm-email?userId={user.Id}&token={encodedToken}";
+            var localePath = Convert.ToBoolean(_configuration["App:UseLocaleInUrl"]) ? $"/{localeId}" : "";
+            var callbackUrl = $"{_configuration["App:BaseUrl"]}{localePath}/auth/confirm-email?userId={user.Id}&token={encodedToken}";
             await _emailService.SendEmailAsync(
                 user.Email!,
                 "Confirm your LOVI account",
@@ -385,7 +386,7 @@ namespace LoviBackend.Controllers
                     user.Email!,
                     "Welcome to LOVI",
                     $"Hi {user.Name}!<br><br>" +
-                    $"Your account has been successfully created. welcome to <a href=\"www.lovi.media\">LOVI</a>.<br><br>" +
+                    $"Your account has been successfully created. welcome to <a href=\"{_configuration["App:BaseUrl"]}\">LOVI</a>.<br><br>" +
                     $"You can now start exploring everything we have to offer."
                 );
             } else if(!await _userManager.IsEmailConfirmedAsync(user))
@@ -401,7 +402,7 @@ namespace LoviBackend.Controllers
                     user.Email!,
                     "Welcome to LOVI",
                     $"Hi {user.Name}!<br><br>" +
-                    $"Your account has been successfully created. welcome to <a href=\"www.lovi.media\">LOVI</a>.<br><br>" +
+                    $"Your account has been successfully created. welcome to <a href=\"{_configuration["App:BaseUrl"]}\">LOVI</a>.<br><br>" +
                     $"You can now start exploring everything we have to offer."
                 );
             }
@@ -588,7 +589,7 @@ namespace LoviBackend.Controllers
         // POST: api/auth/change-email
         [HttpPost("change-email")]
         [Authorize]
-        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailDto model)
+        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailDto model, [FromHeader(Name = "X-Locale")] string localeId)
         {
             var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(id)) return Unauthorized();
@@ -639,7 +640,8 @@ namespace LoviBackend.Controllers
             );
 
             // Send confirmation to the new email
-            var callbackUrl = $"{_configuration["App:BaseUrl"]}/auth/confirm-change-email?userId={id}&newEmail={newEmail}&token={encodedToken}";
+            var localePath = bool.TryParse(_configuration["App:UseLocaleInUrl"], out bool loc) ? $"/{localeId}" : "";
+            var callbackUrl = $"{_configuration["App:BaseUrl"]}{localePath}/auth/confirm-change-email?userId={id}&newEmail={newEmail}&token={encodedToken}";
             await _emailService.SendEmailAsync(
                 newEmail,
                 "Confirm Your New Email",
@@ -727,7 +729,7 @@ namespace LoviBackend.Controllers
 
         // POST: api/auth/forgot-password
         [HttpPost("forgot-password")]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model)
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model, [FromHeader(Name = "X-Locale")] string localeId)
         {
             var email = model.Email;
 
@@ -766,7 +768,8 @@ namespace LoviBackend.Controllers
             var encodedEmail = UrlEncoder.Default.Encode(user.Email!); // Use newEmail for simplicity in routing
 
             // 3. Construct the Reset URL pointing to your Angular app
-            var callbackUrl = $"{_configuration["App:BaseUrl"]}/auth/forgot-password?email={encodedEmail}&token={encodedToken}";
+            var localePath = bool.TryParse(_configuration["App:UseLocaleInUrl"], out bool loc) ? $"/{localeId}" : "";
+            var callbackUrl = $"{_configuration["App:BaseUrl"]}{localePath}/auth/forgot-password?email={encodedEmail}&token={encodedToken}";
 
             // 4. Send the Email
             await _emailService.SendEmailAsync(

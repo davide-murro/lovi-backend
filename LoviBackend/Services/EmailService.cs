@@ -33,7 +33,9 @@ namespace LoviBackend.Services
 
             using var client = new SmtpClient(host, port)
             {
-                EnableSsl = enableSsl
+                EnableSsl = enableSsl,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false
             };
 
             if (!string.IsNullOrEmpty(username))
@@ -51,21 +53,24 @@ namespace LoviBackend.Services
             var section = _configuration.GetSection("App");
             var baseUrl = section["BaseUrl"] ?? string.Empty;
             var logoUrl = section["LogoUrl"] ?? string.Empty;
+            var email = section["Email"] ?? string.Empty;
             var backgroundColor = "#231f20";
             var textColor = "#ffffff";
             var fontFamily = "'Noto Serif',serif";
-            var fontSize = "large";
+            var fontSize = "medium";
 
             // logo
             var logoImg = string.Empty;
             if (!string.IsNullOrEmpty(logoUrl))
             {
-                logoImg = $"<a href=\"{baseUrl}\" title=\"LOVI\"><img src=\"{logoUrl}\" alt=\"logo\" style=\"max-width:160px;height:auto;display:inline-block;\" /></a>";
+                logoImg = $"<a href=\"{baseUrl}\" target=\"_blank\" title=\"LOVI home\"><img src=\"{logoUrl}\" style=\"max-width:160px;height:auto;display:inline-block;\" /></a>";
             }
 
             // signature
-            var signatureHtml = $"<strong>The LOVI Team</strong>";
-
+            var signatureHtml = @$"
+                    <strong>The LOVI Team</strong><br>
+                    <a href=""mailto:{email}"">{email}</a>
+            ";
             return $@"
                 <!doctype html>
                 <html>
@@ -83,7 +88,7 @@ namespace LoviBackend.Services
                             </td>
                         </tr>
                         <tr>
-                            <td style=""padding:1rem;"">
+                            <td style=""padding:2rem 1rem;"">
                                 {contentHtml}
                             </td>
                         </tr>

@@ -57,10 +57,10 @@ nunit-*.xml
 .vs/*
 
 # appsettings
-appsettings.*.json
+LoviBackend/appsettings.*.json
 
 # publish profiles
-Properties/PublishProfiles/
+LoviBackend/Properties/PublishProfiles/
 
 # uploads
-uploads/
+LoviBackend/uploads/

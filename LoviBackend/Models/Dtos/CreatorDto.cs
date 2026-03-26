@@ -12,5 +12,13 @@ namespace LoviBackend.Models.Dtos
         public string? Name { get; set; }
 
         public string? Surname { get; set; }
+
+        public string? DataUrl { get; set; }
+
+        public string? CoverImageUrl { get; set; }
+        public IFormFile? CoverImage { get; set; }
+
+        public string? CoverImagePreviewUrl { get; set; }
+        public IFormFile? CoverImagePreview { get; set; }
     }
 }

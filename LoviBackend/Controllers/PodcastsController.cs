@@ -75,6 +75,7 @@ namespace LoviBackend.Controllers
                 Id = podcast.Id,
                 Name = podcast.Name,
                 Description = podcast.Description,
+                DataUrl = Url.Action(nameof(Get), "Podcasts", new { id = podcast.Id }, Request.Scheme),
                 CoverImageUrl = podcast.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = podcast.Id }, Request.Scheme) : null,
                 CoverImagePreviewUrl = podcast.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = podcast.Id, isPreview = true }, Request.Scheme) : null,
                 Episodes = podcast.Episodes.OrderBy(pe => pe.Number).Select(pe => new PodcastEpisodeDto
@@ -83,6 +84,7 @@ namespace LoviBackend.Controllers
                     Number = pe.Number,
                     Name = pe.Name,
                     Description = pe.Description,
+                    DataUrl = Url.Action(nameof(GetEpisode), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme),
                     CoverImageUrl = pe.CoverImagePath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
                     CoverImagePreviewUrl = pe.CoverImagePreviewPath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id, isPreview = true }, Request.Scheme) : null,
                     AudioUrl = pe.AudioPath != null ? Url.Action(nameof(GetEpisodeAudio), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
@@ -190,9 +192,7 @@ namespace LoviBackend.Controllers
             {
                 Id = podcast.Id,
                 Name = podcast.Name,
-                Description = podcast.Description,
-                CoverImageUrl = podcast.CoverImagePath,
-                CoverImagePreviewUrl = podcast.CoverImagePreviewPath
+                Description = podcast.Description
             });
         }
 
@@ -249,9 +249,7 @@ namespace LoviBackend.Controllers
             {
                 Id = podcast.Id,
                 Name = podcast.Name,
-                Description = podcast.Description,
-                CoverImageUrl = podcast.CoverImagePath,
-                CoverImagePreviewUrl = podcast.CoverImagePreviewPath
+                Description = podcast.Description
             });
         }
 
@@ -339,6 +337,7 @@ namespace LoviBackend.Controllers
                 {
                     Id = p.Id,
                     Name = p.Name,
+                    DataUrl = Url.Action(nameof(Get), "Podcasts", new { id = p.Id }, Request.Scheme),
                     CoverImageUrl = p.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = p.Id }, Request.Scheme) : null,
                     CoverImagePreviewUrl = p.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = p.Id, isPreview = true }, Request.Scheme) : null,
                     Description = p.Description,
@@ -376,8 +375,8 @@ namespace LoviBackend.Controllers
                 return NotFound();
 
             var filePath = Path.Combine(
-                _hostingEnvironment.ContentRootPath, 
-                _configuration["UploadsPath"]!, 
+                _hostingEnvironment.ContentRootPath,
+                _configuration["UploadsPath"]!,
                 coverImagePath);
             if (!System.IO.File.Exists(filePath))
                 return NotFound();
@@ -445,6 +444,7 @@ namespace LoviBackend.Controllers
                 Number = podcastEpisode.Number,
                 Name = podcastEpisode.Name,
                 Description = podcastEpisode.Description,
+                DataUrl = Url.Action(nameof(GetEpisode), "Podcasts", new { id = podcastEpisode.PodcastId, episodeId = podcastEpisode.Id }, Request.Scheme),
                 CoverImageUrl = podcastEpisode.CoverImagePath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = podcastEpisode.PodcastId, episodeId = podcastEpisode.Id }, Request.Scheme) : null,
                 CoverImagePreviewUrl = podcastEpisode.CoverImagePreviewPath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = podcastEpisode.PodcastId, episodeId = podcastEpisode.Id, isPreview = true }, Request.Scheme) : null,
                 AudioUrl = podcastEpisode.AudioPath != null ? Url.Action(nameof(GetEpisodeAudio), "Podcasts", new { id = podcastEpisode.PodcastId, episodeId = podcastEpisode.Id }, Request.Scheme) : null,
@@ -453,12 +453,16 @@ namespace LoviBackend.Controllers
                     Id = podcastEpisode.Podcast.Id,
                     Name = podcastEpisode.Podcast.Name,
                     Description = podcastEpisode.Podcast.Description,
+                    DataUrl = Url.Action(nameof(Get), "Podcasts", new { id = podcastEpisode.Podcast.Id }, Request.Scheme),
+                    CoverImageUrl = podcastEpisode.Podcast.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = podcastEpisode.Podcast.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = podcastEpisode.Podcast.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = podcastEpisode.Podcast.Id, isPreview = true }, Request.Scheme) : null,
                     Episodes = podcastEpisode.Podcast.Episodes.OrderBy(pe => pe.Number).Select(pe => new PodcastEpisodeDto
                     {
                         Id = pe.Id,
                         Number = pe.Number,
                         Name = pe.Name,
                         Description = pe.Description,
+                        DataUrl = Url.Action(nameof(GetEpisode), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme),
                         CoverImageUrl = pe.CoverImagePath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
                         CoverImagePreviewUrl = pe.CoverImagePreviewPath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id, isPreview = true }, Request.Scheme) : null,
                         AudioUrl = pe.AudioPath != null ? Url.Action(nameof(GetEpisodeAudio), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
@@ -720,9 +724,6 @@ namespace LoviBackend.Controllers
                 Id = podcastEpisode.Id,
                 Name = podcastEpisode.Name,
                 Description = podcastEpisode.Description,
-                CoverImageUrl = podcastEpisode.CoverImagePath,
-                CoverImagePreviewUrl = podcastEpisode.CoverImagePreviewPath,
-                AudioUrl = podcastEpisode.AudioPath,
                 PodcastId = podcastEpisode.PodcastId
             });
         }

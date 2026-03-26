@@ -60,6 +60,7 @@ builder.Services
     .AddJwtBearer(options =>
     {
         options.SaveToken = true;
+        // TODO: mettere in appsetting?
         options.RequireHttpsMetadata = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -73,6 +74,39 @@ builder.Services
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
             ),
             ClockSkew = TimeSpan.Zero,  // expires tollerance
+        };
+
+        // Allow bearer token also via query string parameter `access_token` when Authorization header is not present.
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                // preserve header precedence
+                if (!string.IsNullOrEmpty(context.Token))
+                    return Task.CompletedTask;
+
+                // 1) try query string
+                var token = context.Request.Query["access_token"].FirstOrDefault();
+                if (!string.IsNullOrEmpty(token))
+                {
+                    context.Token = token;
+                    return Task.CompletedTask;
+                }
+
+                /*
+                // 2) try cookie
+                if (context.Request.Cookies != null && context.Request.Cookies.Count > 0)
+                {
+                    var cookieToken = context.Request.Cookies["access_token"];
+                    if (!string.IsNullOrEmpty(cookieToken))
+                    {
+                        context.Token = cookieToken;
+                    }
+                }
+                */
+
+                return Task.CompletedTask;
+            }
         };
     });
 

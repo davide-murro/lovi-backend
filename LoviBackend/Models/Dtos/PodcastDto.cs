@@ -9,6 +9,8 @@ namespace LoviBackend.Models.Dtos
         [Required]
         public string Name { get; set; } = null!;
 
+        public string? DataUrl { get; set; }
+
         public string? CoverImageUrl { get; set; }
         public IFormFile? CoverImage { get; set; }
 

@@ -857,6 +857,9 @@ namespace LoviBackend.Controllers
                     "Your account has been successfully deleted. Thank you for being with us."
                 );
 
+                // Delete the refresh token cookie so browser no longer sends it
+                _cookieService.Delete(Response, "refreshToken");
+
                 // Note: After deletion, the client must also log out (clear the JWT).
                 return NoContent(); // HTTP 204: Success, no content to return
             }

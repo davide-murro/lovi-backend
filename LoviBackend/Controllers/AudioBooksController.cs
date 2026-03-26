@@ -72,6 +72,7 @@ namespace LoviBackend.Controllers
                 Id = audioBook.Id,
                 Name = audioBook.Name,
                 Description = audioBook.Description,
+                DataUrl = Url.Action(nameof(Get), "AudioBooks", new { id = audioBook.Id }, Request.Scheme),
                 CoverImageUrl = audioBook.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "AudioBooks", new { id = audioBook.Id }, Request.Scheme) : null,
                 CoverImagePreviewUrl = audioBook.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "AudioBooks", new { id = audioBook.Id, isPreview = true }, Request.Scheme) : null,
                 AudioUrl = audioBook.AudioPath != null ? Url.Action(nameof(GetAudio), "AudioBooks", new { id = audioBook.Id }, Request.Scheme) : null,
@@ -261,14 +262,11 @@ namespace LoviBackend.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            return CreatedAtAction(nameof(Get), new { id = audioBook.Id }, new PodcastEpisodeDto
+            return CreatedAtAction(nameof(Get), new { id = audioBook.Id }, new AudioBookDto
             {
                 Id = audioBook.Id,
                 Name = audioBook.Name,
-                Description = audioBook.Description,
-                CoverImageUrl = audioBook.CoverImagePath,
-                CoverImagePreviewUrl = audioBook.CoverImagePreviewPath,
-                AudioUrl = audioBook.AudioPath
+                Description = audioBook.Description
             });
         }
 
@@ -349,6 +347,7 @@ namespace LoviBackend.Controllers
                 {
                     Id = ab.Id,
                     Name = ab.Name,
+                    DataUrl = Url.Action(nameof(Get), "AudioBooks", new { id = ab.Id }, Request.Scheme),
                     CoverImageUrl = ab.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "AudioBooks", new { id = ab.Id }, Request.Scheme) : null,
                     CoverImagePreviewUrl = ab.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "AudioBooks", new { id = ab.Id, isPreview = true }, Request.Scheme) : null,
                     Description = ab.Description,

@@ -150,12 +150,10 @@ namespace LoviBackend.Controllers
             // Apply search filter
             if (!string.IsNullOrWhiteSpace(query.Search))
             {
-                string search = query.Search.ToLower();
-
                 creatorsQuery = creatorsQuery.Where(p =>
-                    p.Nickname.ToLower().Contains(search) ||
-                    p.Name == null || p.Name.ToLower().Contains(search) ||
-                    p.Surname == null || p.Surname.ToLower().Contains(search)
+                    EF.Functions.Like(p.Nickname, $"%{query.Search}%") ||
+                    (p.Name != null && EF.Functions.Like(p.Name, $"%{query.Search}%")) ||
+                    (p.Surname != null && EF.Functions.Like(p.Surname, $"%{query.Search}%"))
                 );
             }
 

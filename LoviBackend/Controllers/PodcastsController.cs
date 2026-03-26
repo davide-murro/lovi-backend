@@ -306,15 +306,13 @@ namespace LoviBackend.Controllers
             // Apply search filter
             if (!string.IsNullOrWhiteSpace(query.Search))
             {
-                string search = query.Search.ToLower();
-
                 podcastsQuery = podcastsQuery.Where(p =>
-                    p.Name.ToLower().Contains(search) ||
-                    p.Description == null || p.Description.ToLower().Contains(search) ||
+                    EF.Functions.Like(p.Name, $"%{query.Search}%") ||
+                    (p.Description != null && EF.Functions.Like(p.Description, $"%{query.Search}%")) ||
                     p.Voicers.Any(v =>
-                        v.Creator.Nickname.ToLower().Contains(search) ||
-                        v.Creator.Name == null || v.Creator.Name.ToLower().Contains(search) ||
-                        v.Creator.Surname == null || v.Creator.Surname.ToLower().Contains(search)
+                        EF.Functions.Like(v.Creator.Nickname, $"%{query.Search}%") ||
+                        (v.Creator.Name != null && EF.Functions.Like(v.Creator.Name, $"%{query.Search}%")) ||
+                        (v.Creator.Surname != null && EF.Functions.Like(v.Creator.Surname, $"%{query.Search}%"))
                     )
                 );
             }

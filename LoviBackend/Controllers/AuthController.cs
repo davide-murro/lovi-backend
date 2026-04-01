@@ -318,7 +318,7 @@ namespace LoviBackend.Controllers
                         email = root.TryGetProperty("email", out var em) ? em.GetString() : null;
                         break;
                     }
-                    case "facebook":
+                    /*case "facebook":
                     {
                         var fbUrl = $"https://graph.facebook.com/me?fields=id,name,email&access_token={Uri.EscapeDataString(dto.AccessToken)}";
                         var res = await client.GetAsync(fbUrl);
@@ -349,7 +349,7 @@ namespace LoviBackend.Controllers
 
                         // Instagram won't provide email via this API. Require client to provide email if needed.
                         return BadRequest("Instagram login requires an email which is not provided by Instagram Basic Display API.");
-                    }
+                    }*/
                     default:
                         return BadRequest("Unsupported external provider.");
                 }

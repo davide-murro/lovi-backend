@@ -93,7 +93,6 @@ builder.Services
                     return Task.CompletedTask;
                 }
 
-                /*
                 // 2) try cookie
                 if (context.Request.Cookies != null && context.Request.Cookies.Count > 0)
                 {
@@ -103,7 +102,6 @@ builder.Services
                         context.Token = cookieToken;
                     }
                 }
-                */
 
                 return Task.CompletedTask;
             }

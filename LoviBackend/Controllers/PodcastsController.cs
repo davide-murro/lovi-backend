@@ -424,12 +424,6 @@ namespace LoviBackend.Controllers
         {
             var podcastEpisode = await _context.PodcastEpisodes
                 .Include(pe => pe.Podcast)
-                    .ThenInclude(p => p.Voicers)
-                        .ThenInclude(v => v.Creator)
-                .Include(pe => pe.Podcast)
-                    .ThenInclude(p => p.Episodes)
-                        .ThenInclude(pe => pe.Voicers)
-                            .ThenInclude(v => v.Creator)
                 .Include(pe => pe.Voicers)
                     .ThenInclude(v => v.Creator)
                 .FirstOrDefaultAsync(p => p.PodcastId == id && p.Id == episodeId);
@@ -454,31 +448,6 @@ namespace LoviBackend.Controllers
                     DataUrl = Url.Action(nameof(Get), "Podcasts", new { id = podcastEpisode.Podcast.Id }, Request.Scheme),
                     CoverImageUrl = podcastEpisode.Podcast.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = podcastEpisode.Podcast.Id }, Request.Scheme) : null,
                     CoverImagePreviewUrl = podcastEpisode.Podcast.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = podcastEpisode.Podcast.Id, isPreview = true }, Request.Scheme) : null,
-                    Episodes = podcastEpisode.Podcast.Episodes.OrderBy(pe => pe.Number).Select(pe => new PodcastEpisodeDto
-                    {
-                        Id = pe.Id,
-                        Number = pe.Number,
-                        Name = pe.Name,
-                        Description = pe.Description,
-                        DataUrl = Url.Action(nameof(GetEpisode), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme),
-                        CoverImageUrl = pe.CoverImagePath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
-                        CoverImagePreviewUrl = pe.CoverImagePreviewPath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id, isPreview = true }, Request.Scheme) : null,
-                        AudioUrl = pe.AudioPath != null ? Url.Action(nameof(GetEpisodeAudio), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
-                        Voicers = pe.Voicers.Select(v => new CreatorDto
-                        {
-                            Id = v.Creator.Id,
-                            Nickname = v.Creator.Nickname,
-                            Name = v.Creator.Name,
-                            Surname = v.Creator.Surname
-                        }).ToList()
-                    }).ToList(),
-                    Voicers = podcastEpisode.Podcast.Voicers.Select(v => new CreatorDto
-                    {
-                        Id = v.Creator.Id,
-                        Nickname = v.Creator.Nickname,
-                        Name = v.Creator.Name,
-                        Surname = v.Creator.Surname
-                    }).ToList()
                 },
                 Voicers = podcastEpisode.Voicers.Select(v => new CreatorDto
                 {

@@ -60,8 +60,7 @@ builder.Services
     .AddJwtBearer(options =>
     {
         options.SaveToken = true;
-        // TODO: mettere in appsetting?
-        options.RequireHttpsMetadata = false;
+        options.RequireHttpsMetadata = Convert.ToBoolean(builder.Configuration["JwtOptions:RequireHttpsMetadata"]);
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,

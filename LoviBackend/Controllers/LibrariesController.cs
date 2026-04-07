@@ -204,6 +204,15 @@ namespace LoviBackend.Controllers
                 return Unauthorized();
             }
 
+            // check if the same library item already exists for this user
+            var exists = await _context.Libraries.AnyAsync(l =>
+                l.UserId == userId &&
+                l.PodcastId == manageLibraryDto.PodcastId &&
+                l.PodcastEpisodeId == manageLibraryDto.PodcastEpisodeId &&
+                l.AudioBookId == manageLibraryDto.AudioBookId);
+
+            if (exists) return NoContent();
+
             var library = new Library
             {
                 UserId = userId,
@@ -234,13 +243,26 @@ namespace LoviBackend.Controllers
                 return BadRequest("No items provided");
             }
 
-            var libraries = manageLibraryDtos.Select(dto => new Library
+            var libraries = new List<Library>();
+            foreach (var dto in manageLibraryDtos)
             {
-                UserId = userId,
-                PodcastId = dto.PodcastId,
-                PodcastEpisodeId = dto.PodcastEpisodeId,
-                AudioBookId = dto.AudioBookId,
-            }).ToList();
+                var exists = await _context.Libraries.AnyAsync(l =>
+                    l.UserId == userId &&
+                    l.PodcastId == dto.PodcastId &&
+                    l.PodcastEpisodeId == dto.PodcastEpisodeId &&
+                    l.AudioBookId == dto.AudioBookId);
+
+                if (exists)
+                    continue;
+
+                libraries.Add(new Library
+                {
+                    UserId = userId,
+                    PodcastId = dto.PodcastId,
+                    PodcastEpisodeId = dto.PodcastEpisodeId,
+                    AudioBookId = dto.AudioBookId,
+                });
+            }
 
             _context.Libraries.AddRange(libraries);
             await _context.SaveChangesAsync();
@@ -283,7 +305,7 @@ namespace LoviBackend.Controllers
 
             if (library == null)
             {
-                return NotFound();
+                return NoContent();
             }
 
             _context.Libraries.Remove(library);
@@ -310,7 +332,7 @@ namespace LoviBackend.Controllers
 
             if (libraries == null || !libraries.Any())
             {
-                return NotFound();
+                return NoContent();
             }
 
             _context.Libraries.RemoveRange(libraries);

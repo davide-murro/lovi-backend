@@ -30,7 +30,15 @@ namespace LoviBackend.Services
         public string? TransformOutbound(object? value)
         {
             if (value == null) return null;
-            return Regex.Replace(value.ToString()!, "([a-z])([A-Z])", "$1_$2").ToLowerInvariant();
+            var text = value.ToString()!;
+            if (string.IsNullOrEmpty(text)) return text;
+
+            // Split lower-to-upper (e.g. "myValue" -> "my_Value")
+            var result = Regex.Replace(text, "(?<=[a-z0-9])([A-Z])", "_$1");
+            // Split upper-acronym followed by Pascal word (e.g. "EBooks" -> "E_Books")
+            result = Regex.Replace(result, "(?<=[A-Z])([A-Z][a-z])", "_$1");
+
+            return result.ToLowerInvariant();
         }
     }
 
@@ -40,7 +48,15 @@ namespace LoviBackend.Services
         public string? TransformOutbound(object? value)
         {
             if (value == null) return null;
-            return Regex.Replace(value.ToString()!, "([a-z])([A-Z])", "$1-$2").ToLowerInvariant();
+            var text = value.ToString()!;
+            if (string.IsNullOrEmpty(text)) return text;
+
+            // Split lower-to-upper (e.g. "myValue" -> "my-Value")
+            var result = Regex.Replace(text, "(?<=[a-z0-9])([A-Z])", "-$1");
+            // Split upper-acronym followed by Pascal word (e.g. "EBooks" -> "E-Books")
+            result = Regex.Replace(result, "(?<=[A-Z])([A-Z][a-z])", "-$1");
+
+            return result.ToLowerInvariant();
         }
     }
 

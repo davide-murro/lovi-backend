@@ -259,10 +259,7 @@ namespace LoviBackend.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var podcast = await _context.Podcasts.FindAsync(id);
-            if (podcast == null)
-            {
-                return NotFound();
-            }
+            if (podcast == null) return NotFound();
 
             _context.Podcasts.Remove(podcast);
             await _context.SaveChangesAsync();
@@ -270,11 +267,7 @@ namespace LoviBackend.Controllers
             // handle files
             var uploadPath = Path.Combine(_hostingEnvironment.ContentRootPath, _configuration["UploadsPath"]!);
             var podcastPath = Path.Combine("podcasts", podcast.Id.ToString());
-
-            if (Directory.Exists(Path.Combine(uploadPath, podcastPath)))
-            {
-                Directory.Delete(Path.Combine(uploadPath, podcastPath), recursive: true);
-            }
+            if (Directory.Exists(Path.Combine(uploadPath, podcastPath))) Directory.Delete(Path.Combine(uploadPath, podcastPath), recursive: true);
 
             return NoContent();
         }

@@ -276,13 +276,15 @@ namespace LoviBackend.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var audioBook = await _context.AudioBooks.FindAsync(id);
-            if (audioBook == null)
-            {
-                return NotFound();
-            }
+            if (audioBook == null) return NotFound();
 
             _context.AudioBooks.Remove(audioBook);
             await _context.SaveChangesAsync();
+
+            // handle file
+            var uploadPath = Path.Combine(_hostingEnvironment.ContentRootPath, _configuration["UploadsPath"]!);
+            var audioBookPath = Path.Combine("audio-books", audioBook.Id.ToString());
+            if (Directory.Exists(Path.Combine(uploadPath, audioBookPath))) Directory.Delete(Path.Combine(uploadPath, audioBookPath), true);
 
             return NoContent();
         }

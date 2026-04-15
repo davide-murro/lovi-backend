@@ -13,5 +13,6 @@ namespace LoviBackend.Models.Dtos
 
         public AudioBookDto? AudioBook { get; set; }
 
+        public EBookDto? EBook { get; set; }
     }
 }

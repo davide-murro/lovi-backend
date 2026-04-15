@@ -35,6 +35,9 @@ namespace LoviBackend.Controllers
                 .Include(l => l.AudioBook)
                     .ThenInclude(ab => ab!.Readers)
                         .ThenInclude(r => r.Creator)
+                .Include(l => l.EBook)
+                    .ThenInclude(eb => eb!.Writers)
+                        .ThenInclude(w => w.Creator)
                 .OrderByDescending(l => l.Id)
                 .ToListAsync();
 
@@ -95,6 +98,23 @@ namespace LoviBackend.Controllers
                         Name = r.Creator.Name,
                         Surname = r.Creator.Surname
                     }).ToList()
+                } : null,
+                EBook = l.EBook != null ? new EBookDto
+                {
+                    Id = l.EBook.Id,
+                    Name = l.EBook.Name,
+                    DataUrl = Url.Action(nameof(EBooksController.Get), "EBooks", new { id = l.EBook.Id }, Request.Scheme),
+                    CoverImageUrl = l.EBook.CoverImagePath != null ? Url.Action(nameof(EBooksController.GetCoverImage), "EBooks", new { id = l.EBook.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = l.EBook.CoverImagePreviewPath != null ? Url.Action(nameof(EBooksController.GetCoverImage), "EBooks", new { id = l.EBook.Id, isPreview = true }, Request.Scheme) : null,
+                    FileUrl = l.EBook.FilePath != null ? Url.Action(nameof(EBooksController.GetFile), "EBooks", new { id = l.EBook.Id }, Request.Scheme) : null,
+                    Description = l.EBook.Description,
+                    Writers = l.EBook.Writers.Select(w => new CreatorDto
+                    {
+                        Id = w.Creator.Id,
+                        Nickname = w.Creator.Nickname,
+                        Name = w.Creator.Name,
+                        Surname = w.Creator.Surname
+                    }).ToList()
                 } : null
             }).ToList();
 
@@ -124,6 +144,9 @@ namespace LoviBackend.Controllers
                 .Include(l => l.AudioBook)
                     .ThenInclude(ab => ab!.Readers)
                         .ThenInclude(r => r.Creator)
+                .Include(l => l.EBook)
+                    .ThenInclude(eb => eb!.Writers)
+                        .ThenInclude(w => w.Creator)
                 .Where(l => l.UserId == userId)
                 .OrderByDescending(l => l.Id)
                 .ToListAsync();
@@ -186,6 +209,23 @@ namespace LoviBackend.Controllers
                         Name = r.Creator.Name,
                         Surname = r.Creator.Surname
                     }).ToList()
+                } : null,
+                EBook = l.EBook != null ? new EBookDto
+                {
+                    Id = l.EBook.Id,
+                    Name = l.EBook.Name,
+                    DataUrl = Url.Action(nameof(EBooksController.Get), "EBooks", new { id = l.EBook.Id }, Request.Scheme),
+                    CoverImageUrl = l.EBook.CoverImagePath != null ? Url.Action(nameof(EBooksController.GetCoverImage), "EBooks", new { id = l.EBook.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = l.EBook.CoverImagePreviewPath != null ? Url.Action(nameof(EBooksController.GetCoverImage), "EBooks", new { id = l.EBook.Id, isPreview = true }, Request.Scheme) : null,
+                    FileUrl = l.EBook.FilePath != null ? Url.Action(nameof(EBooksController.GetFile), "EBooks", new { id = l.EBook.Id }, Request.Scheme) : null,
+                    Description = l.EBook.Description,
+                    Writers = l.EBook.Writers.Select(w => new CreatorDto
+                    {
+                        Id = w.Creator.Id,
+                        Nickname = w.Creator.Nickname,
+                        Name = w.Creator.Name,
+                        Surname = w.Creator.Surname
+                    }).ToList()
                 } : null
             }).ToList();
 
@@ -209,7 +249,8 @@ namespace LoviBackend.Controllers
                 l.UserId == userId &&
                 l.PodcastId == manageLibraryDto.PodcastId &&
                 l.PodcastEpisodeId == manageLibraryDto.PodcastEpisodeId &&
-                l.AudioBookId == manageLibraryDto.AudioBookId);
+                l.AudioBookId == manageLibraryDto.AudioBookId &&
+                l.EBookId == manageLibraryDto.EBookId);
 
             if (exists) return NoContent();
 
@@ -219,6 +260,7 @@ namespace LoviBackend.Controllers
                 PodcastId = manageLibraryDto.PodcastId,
                 PodcastEpisodeId = manageLibraryDto.PodcastEpisodeId,
                 AudioBookId = manageLibraryDto.AudioBookId,
+                EBookId = manageLibraryDto.EBookId,
             };
             _context.Libraries.Add(library);
             await _context.SaveChangesAsync();
@@ -250,7 +292,8 @@ namespace LoviBackend.Controllers
                     l.UserId == userId &&
                     l.PodcastId == dto.PodcastId &&
                     l.PodcastEpisodeId == dto.PodcastEpisodeId &&
-                    l.AudioBookId == dto.AudioBookId);
+                    l.AudioBookId == dto.AudioBookId &&
+                    l.EBookId == dto.EBookId);
 
                 if (exists)
                     continue;
@@ -261,6 +304,7 @@ namespace LoviBackend.Controllers
                     PodcastId = dto.PodcastId,
                     PodcastEpisodeId = dto.PodcastEpisodeId,
                     AudioBookId = dto.AudioBookId,
+                    EBookId = dto.EBookId,
                 });
             }
 

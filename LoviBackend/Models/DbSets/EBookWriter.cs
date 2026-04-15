@@ -1,12 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LoviBackend.Models.DbSets
 {
-    public class PodcastVoicer
+    public class EBookWriter
     {
-        public int PodcastId { get; set; }
-        [ForeignKey(nameof(PodcastId))]
-        public Podcast Podcast { get; set; } = null!;
+        public int EBookId { get; set; }
+        [ForeignKey(nameof(EBookId))]
+        public EBook EBook { get; set; } = null!;
 
         public int CreatorId { get; set; }
         [ForeignKey(nameof(CreatorId))]

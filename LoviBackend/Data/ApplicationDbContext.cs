@@ -13,11 +13,13 @@ namespace LoviBackend.Data
         public DbSet<AudioBook> AudioBooks { get; set; } 
         public DbSet<Podcast> Podcasts { get; set; }
         public DbSet<PodcastEpisode> PodcastEpisodes { get; set; }
+        public DbSet<EBook> EBooks { get; set; }
         public DbSet<Library> Libraries { get; set; }
         public DbSet<Creator> Creators { get; set; }
         public DbSet<PodcastVoicer> PodcastVoicers { get; set; }
         public DbSet<PodcastEpisodeVoicer> PodcastEpisodeVoicers { get; set; }
         public DbSet<AudioBookReader> AudioBookReaders { get; set; }
+        public DbSet<EBookWriter> EBookWriters { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -53,6 +55,13 @@ namespace LoviBackend.Data
                       .IsUnique();
             });
 
+            // Configure EBooks table
+            builder.Entity<EBook>(entity =>
+            {
+                entity.HasIndex(e => new { e.Name })
+                    .IsUnique();
+            });
+
             // Configure Libraries table
             builder.Entity<Library>(entity =>
             {
@@ -60,6 +69,8 @@ namespace LoviBackend.Data
                 entity.HasIndex(e => new { e.UserId, e.PodcastId, e.PodcastEpisodeId })
                       .IsUnique();
                 entity.HasIndex(e => new { e.UserId, e.AudioBookId })
+                      .IsUnique();
+                entity.HasIndex(e => new { e.UserId, e.EBookId })
                       .IsUnique();
 
                 // Relationship: User (required, no cascade delete)
@@ -84,6 +95,11 @@ namespace LoviBackend.Data
                 entity.HasOne(e => e.AudioBook)
                       .WithMany()
                       .HasForeignKey(e => e.AudioBookId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.EBook)
+                      .WithMany()
+                      .HasForeignKey(e => e.EBookId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -150,6 +166,23 @@ namespace LoviBackend.Data
                       .WithMany() // Assuming no navigation property on Creator yet
                       .HasForeignKey(ar => ar.CreatorId)
                       .OnDelete(DeleteBehavior.Restrict); // Keep creators if an audiobook is deleted
+            });
+
+            // Configure EBookWriters table
+            builder.Entity<EBookWriter>(entity =>
+            {
+                // Define composite primary key
+                entity.HasKey(ew => new { ew.EBookId, ew.CreatorId });
+
+                entity.HasOne(ew => ew.EBook)
+                      .WithMany(eb => eb.Writers)
+                      .HasForeignKey(ew => ew.EBookId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(ew => ew.Creator)
+                      .WithMany()
+                      .HasForeignKey(ew => ew.CreatorId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

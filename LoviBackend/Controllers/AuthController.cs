@@ -291,8 +291,11 @@ namespace LoviBackend.Controllers
                         var req = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v3/userinfo");
                         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", dto.AccessToken);
                         var res = await client.SendAsync(req);
-                        if (!res.IsSuccessStatusCode)
-                            return BadRequest("Invalid Google token.");
+                        if (!res.IsSuccessStatusCode) 
+                        {
+                            var error = await res.Content.ReadAsStringAsync();
+                            return BadRequest($"Google error: {res.StatusCode} - {error}");
+                        }
 
                         var payload = await res.Content.ReadAsStringAsync();
                         using var doc = JsonDocument.Parse(payload);
@@ -308,7 +311,10 @@ namespace LoviBackend.Controllers
                         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", dto.AccessToken);
                         var res = await client.SendAsync(req);
                         if (!res.IsSuccessStatusCode)
-                            return BadRequest("Invalid Spotify token.");
+                        {
+                            var error = await res.Content.ReadAsStringAsync();
+                            return BadRequest($"Spotify error: {res.StatusCode} - {error}");
+                        }
 
                         var payload = await res.Content.ReadAsStringAsync();
                         using var doc = JsonDocument.Parse(payload);
@@ -322,8 +328,11 @@ namespace LoviBackend.Controllers
                     {
                         var fbUrl = $"https://graph.facebook.com/me?fields=id,name,email&access_token={Uri.EscapeDataString(dto.AccessToken)}";
                         var res = await client.GetAsync(fbUrl);
-                        if (!res.IsSuccessStatusCode)
-                            return BadRequest("Invalid Facebook token.");
+                        if (!res.IsSuccessStatusCode) 
+                        {
+                            var error = await res.Content.ReadAsStringAsync();
+                            return BadRequest($"Facebook error: {res.StatusCode} - {error}");
+                        }
 
                         var payload = await res.Content.ReadAsStringAsync();
                         using var doc = JsonDocument.Parse(payload);
@@ -339,7 +348,10 @@ namespace LoviBackend.Controllers
                         var igUrl = $"https://graph.instagram.com/me?fields=id,username&access_token={Uri.EscapeDataString(dto.AccessToken)}";
                         var res = await client.GetAsync(igUrl);
                         if (!res.IsSuccessStatusCode)
-                            return BadRequest("Invalid Instagram token.");
+                        {
+                            var error = await res.Content.ReadAsStringAsync();
+                            return BadRequest($"Instagram error: {res.StatusCode} - {error}");
+                        }
 
                         var payload = await res.Content.ReadAsStringAsync();
                         using var doc = JsonDocument.Parse(payload);

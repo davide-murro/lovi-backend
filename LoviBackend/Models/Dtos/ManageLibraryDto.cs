@@ -11,8 +11,6 @@ namespace LoviBackend.Models.Dtos
 
         public int? PodcastEpisodeId { get; set; }
 
-        public int? AudioBookId { get; set; }
-
-        public int? EBookId { get; set; }
+        public int? BookId { get; set; }
     }
 }

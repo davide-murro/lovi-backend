@@ -32,11 +32,11 @@ namespace LoviBackend.Controllers
                 .Include(l => l.PodcastEpisode)
                     .ThenInclude(pe => pe!.Voicers)
                         .ThenInclude(v => v.Creator)
-                .Include(l => l.AudioBook)
-                    .ThenInclude(ab => ab!.Readers)
+                .Include(l => l.Book)
+                    .ThenInclude(b => b!.Readers)
                         .ThenInclude(r => r.Creator)
-                .Include(l => l.EBook)
-                    .ThenInclude(eb => eb!.Writers)
+                .Include(l => l.Book)
+                    .ThenInclude(b => b!.Writers)
                         .ThenInclude(w => w.Creator)
                 .OrderByDescending(l => l.Id)
                 .ToListAsync();
@@ -82,33 +82,24 @@ namespace LoviBackend.Controllers
                         Surname = v.Creator.Surname
                     }).ToList()
                 } : null,
-                AudioBook = l.AudioBook != null ? new AudioBookDto
+                Book = l.Book != null ? new BookDto
                 {
-                    Id = l.AudioBook.Id,
-                    Name = l.AudioBook.Name,
-                    DataUrl = Url.Action(nameof(AudioBooksController.Get), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme),
-                    CoverImageUrl = l.AudioBook.CoverImagePath != null ? Url.Action(nameof(AudioBooksController.GetCoverImage), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme) : null,
-                    CoverImagePreviewUrl = l.AudioBook.CoverImagePreviewPath != null ? Url.Action(nameof(AudioBooksController.GetCoverImage), "AudioBooks", new { id = l.AudioBook.Id, isPreview = true }, Request.Scheme) : null,
-                    Description = l.AudioBook.Description,
-                    AudioUrl = l.AudioBook.AudioPath != null ? Url.Action(nameof(AudioBooksController.GetAudio), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme) : null,
-                    Readers = l.AudioBook.Readers.Select(r => new CreatorDto
+                    Id = l.Book.Id,
+                    Name = l.Book.Name,
+                    DataUrl = Url.Action(nameof(BooksController.Get), "Books", new { id = l.Book.Id }, Request.Scheme),
+                    CoverImageUrl = l.Book.CoverImagePath != null ? Url.Action(nameof(BooksController.GetCoverImage), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = l.Book.CoverImagePreviewPath != null ? Url.Action(nameof(BooksController.GetCoverImage), "Books", new { id = l.Book.Id, isPreview = true }, Request.Scheme) : null,
+                    Description = l.Book.Description,
+                    AudioUrl = l.Book.AudioPath != null ? Url.Action(nameof(BooksController.GetAudio), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
+                    FileUrl = l.Book.FilePath != null ? Url.Action(nameof(BooksController.GetFile), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
+                    Readers = l.Book.Readers.Select(r => new CreatorDto
                     {
                         Id = r.Creator.Id,
                         Nickname = r.Creator.Nickname,
                         Name = r.Creator.Name,
                         Surname = r.Creator.Surname
-                    }).ToList()
-                } : null,
-                EBook = l.EBook != null ? new EBookDto
-                {
-                    Id = l.EBook.Id,
-                    Name = l.EBook.Name,
-                    DataUrl = Url.Action(nameof(EBooksController.Get), "EBooks", new { id = l.EBook.Id }, Request.Scheme),
-                    CoverImageUrl = l.EBook.CoverImagePath != null ? Url.Action(nameof(EBooksController.GetCoverImage), "EBooks", new { id = l.EBook.Id }, Request.Scheme) : null,
-                    CoverImagePreviewUrl = l.EBook.CoverImagePreviewPath != null ? Url.Action(nameof(EBooksController.GetCoverImage), "EBooks", new { id = l.EBook.Id, isPreview = true }, Request.Scheme) : null,
-                    FileUrl = l.EBook.FilePath != null ? Url.Action(nameof(EBooksController.GetFile), "EBooks", new { id = l.EBook.Id }, Request.Scheme) : null,
-                    Description = l.EBook.Description,
-                    Writers = l.EBook.Writers.Select(w => new CreatorDto
+                    }).ToList(),
+                    Writers = l.Book.Writers.Select(w => new CreatorDto
                     {
                         Id = w.Creator.Id,
                         Nickname = w.Creator.Nickname,
@@ -141,11 +132,11 @@ namespace LoviBackend.Controllers
                 .Include(l => l.PodcastEpisode)
                     .ThenInclude(pe => pe!.Voicers)
                         .ThenInclude(v => v.Creator)
-                .Include(l => l.AudioBook)
-                    .ThenInclude(ab => ab!.Readers)
+                .Include(l => l.Book)
+                    .ThenInclude(b => b!.Readers)
                         .ThenInclude(r => r.Creator)
-                .Include(l => l.EBook)
-                    .ThenInclude(eb => eb!.Writers)
+                .Include(l => l.Book)
+                    .ThenInclude(b => b!.Writers)
                         .ThenInclude(w => w.Creator)
                 .Where(l => l.UserId == userId)
                 .OrderByDescending(l => l.Id)
@@ -193,33 +184,24 @@ namespace LoviBackend.Controllers
                         Surname = v.Creator.Surname
                     }).ToList()
                 } : null,
-                AudioBook = l.AudioBook != null ? new AudioBookDto
+                Book = l.Book != null ? new BookDto
                 {
-                    Id = l.AudioBook.Id,
-                    Name = l.AudioBook.Name,
-                    DataUrl = Url.Action(nameof(AudioBooksController.Get), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme),
-                    CoverImageUrl = l.AudioBook.CoverImagePath != null ? Url.Action(nameof(AudioBooksController.GetCoverImage), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme) : null,
-                    CoverImagePreviewUrl = l.AudioBook.CoverImagePreviewPath != null ? Url.Action(nameof(AudioBooksController.GetCoverImage), "AudioBooks", new { id = l.AudioBook.Id, isPreview = true }, Request.Scheme) : null,
-                    Description = l.AudioBook.Description,
-                    AudioUrl = l.AudioBook.AudioPath != null ? Url.Action(nameof(AudioBooksController.GetAudio), "AudioBooks", new { id = l.AudioBook.Id }, Request.Scheme) : null,
-                    Readers = l.AudioBook.Readers.Select(r => new CreatorDto
+                    Id = l.Book.Id,
+                    Name = l.Book.Name,
+                    DataUrl = Url.Action("Get", "Books", new { id = l.Book.Id }, Request.Scheme),
+                    CoverImageUrl = l.Book.CoverImagePath != null ? Url.Action(nameof(BooksController.GetCoverImage), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = l.Book.CoverImagePreviewPath != null ? Url.Action(nameof(BooksController.GetCoverImage), "Books", new { id = l.Book.Id, isPreview = true }, Request.Scheme) : null,
+                    Description = l.Book.Description,
+                    AudioUrl = l.Book.AudioPath != null ? Url.Action(nameof(BooksController.GetAudio), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
+                    FileUrl = l.Book.FilePath != null ? Url.Action(nameof(BooksController.GetFile), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
+                    Readers = l.Book.Readers.Select(r => new CreatorDto
                     {
                         Id = r.Creator.Id,
                         Nickname = r.Creator.Nickname,
                         Name = r.Creator.Name,
                         Surname = r.Creator.Surname
-                    }).ToList()
-                } : null,
-                EBook = l.EBook != null ? new EBookDto
-                {
-                    Id = l.EBook.Id,
-                    Name = l.EBook.Name,
-                    DataUrl = Url.Action(nameof(EBooksController.Get), "EBooks", new { id = l.EBook.Id }, Request.Scheme),
-                    CoverImageUrl = l.EBook.CoverImagePath != null ? Url.Action(nameof(EBooksController.GetCoverImage), "EBooks", new { id = l.EBook.Id }, Request.Scheme) : null,
-                    CoverImagePreviewUrl = l.EBook.CoverImagePreviewPath != null ? Url.Action(nameof(EBooksController.GetCoverImage), "EBooks", new { id = l.EBook.Id, isPreview = true }, Request.Scheme) : null,
-                    FileUrl = l.EBook.FilePath != null ? Url.Action(nameof(EBooksController.GetFile), "EBooks", new { id = l.EBook.Id }, Request.Scheme) : null,
-                    Description = l.EBook.Description,
-                    Writers = l.EBook.Writers.Select(w => new CreatorDto
+                    }).ToList(),
+                    Writers = l.Book.Writers.Select(w => new CreatorDto
                     {
                         Id = w.Creator.Id,
                         Nickname = w.Creator.Nickname,
@@ -249,8 +231,7 @@ namespace LoviBackend.Controllers
                 l.UserId == userId &&
                 l.PodcastId == manageLibraryDto.PodcastId &&
                 l.PodcastEpisodeId == manageLibraryDto.PodcastEpisodeId &&
-                l.AudioBookId == manageLibraryDto.AudioBookId &&
-                l.EBookId == manageLibraryDto.EBookId);
+                l.BookId == manageLibraryDto.BookId);
 
             if (exists) return NoContent();
 
@@ -259,8 +240,7 @@ namespace LoviBackend.Controllers
                 UserId = userId,
                 PodcastId = manageLibraryDto.PodcastId,
                 PodcastEpisodeId = manageLibraryDto.PodcastEpisodeId,
-                AudioBookId = manageLibraryDto.AudioBookId,
-                EBookId = manageLibraryDto.EBookId,
+                BookId = manageLibraryDto.BookId,
             };
             _context.Libraries.Add(library);
             await _context.SaveChangesAsync();
@@ -292,8 +272,7 @@ namespace LoviBackend.Controllers
                     l.UserId == userId &&
                     l.PodcastId == dto.PodcastId &&
                     l.PodcastEpisodeId == dto.PodcastEpisodeId &&
-                    l.AudioBookId == dto.AudioBookId &&
-                    l.EBookId == dto.EBookId);
+                    l.BookId == dto.BookId);
 
                 if (exists)
                     continue;
@@ -303,8 +282,7 @@ namespace LoviBackend.Controllers
                     UserId = userId,
                     PodcastId = dto.PodcastId,
                     PodcastEpisodeId = dto.PodcastEpisodeId,
-                    AudioBookId = dto.AudioBookId,
-                    EBookId = dto.EBookId,
+                    BookId = dto.BookId,
                 });
             }
 

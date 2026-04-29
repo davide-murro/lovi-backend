@@ -27,16 +27,10 @@ namespace LoviBackend.Models.DbSets
         [ForeignKey(nameof(PodcastEpisodeId))]
         public PodcastEpisode? PodcastEpisode { get; set; }
 
-        // AudioBook
-        public int? AudioBookId { get; set; }
-        
-        [ForeignKey(nameof(AudioBookId))]
-        public AudioBook? AudioBook { get; set; }
+        // Unified Book (optional)
+        public int? BookId { get; set; }
 
-        // EBook
-        public int? EBookId { get; set; }
-
-        [ForeignKey(nameof(EBookId))]
-        public EBook? EBook { get; set; }
+        [ForeignKey(nameof(BookId))]
+        public Book? Book { get; set; }
     }
 }

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<data name="ConfirmAccountSubject" xml:space="preserve">
+    <value>Confirm your LOVI account</value>
+  </data>
+	<data name="ConfirmAccountBody" xml:space="preserve">
+    <value><![CDATA[Welcome, {0}!<br/><br/>Please confirm your account by clicking this link:<br/><br/><a href='{1}'>Confirm LOVI account</a>]]></value>
+  </data>
+	<data name="EmailChangingSubject" xml:space="preserve">
+    <value>Email Address Changing</value>
+  </data>
+	<data name="EmailChangingBody" xml:space="preserve">
+    <value><![CDATA[Your email address on LOVI is about to change from {0} to {1}. If this wasn't you, please contact support.]]></value>
+  </data>
+	<data name="ConfirmNewEmailSubject" xml:space="preserve">
+    <value>Confirm Your New Email</value>
+  </data>
+	<data name="ConfirmNewEmailBody" xml:space="preserve">
+    <value><![CDATA[Please confirm your new email address by clicking here:<br/><br/><a href='{0}'>Confirm new Email</a>]]></value>
+  </data>
+	<data name="PasswordResetSubject" xml:space="preserve">
+    <value>Password Reset Request</value>
+  </data>
+	<data name="PasswordResetBody" xml:space="preserve">
+    <value><![CDATA[Please reset your password by clicking here:<br/><br/><a href='{0}'>Reset Password</a>]]></value>
+  </data>
+	<data name="PasswordChangeSubject" xml:space="preserve">
+	<value>Password Changed Successfully</value>
+  </data>
+	<data name="PasswordChangeBody" xml:space="preserve">
+	<value><![CDATA[Your account password has been successfully updated. If you did not make this change, please contact support immediately.]]></value>
+  </data>
+	<data name="WelcomeSubject" xml:space="preserve">
+	<value>Welcome to LOVI</value>
+  </data>
+	<data name="WelcomeBody" xml:space="preserve">
+	<value><![CDATA[Hi {0}!<br/><br/>Your account has been successfully created. welcome to <a href="{1}">LOVI</a>.<br/><br/>You can now start exploring everything we have to offer.]]></value>
+  </data>
+	<data name="EmailChangedSubject" xml:space="preserve">
+	<value>Email Address Changed</value>
+  </data>
+	<data name="EmailChangedBody" xml:space="preserve">
+	<value><![CDATA[Your email address on LOVI has been changed from {0} to {1}. If this wasn't you, please contact support.]]></value>
+  </data>
+	<data name="PasswordResetConfirmedSubject" xml:space="preserve">
+	<value>Password Reset Confirmed</value>
+  </data>
+	<data name="PasswordResetConfirmedBody" xml:space="preserve">
+	<value><![CDATA[Your password has been successfully reset. You can now log in with your new password.]]></value>
+  </data>
+	<data name="AccountDeletedSubject" xml:space="preserve">
+	<value>Account Successfully Deleted</value>
+  </data>
+	<data name="AccountDeletedBody" xml:space="preserve">
+	<value><![CDATA[Your account has been successfully deleted. Thank you for being with us.]]></value>
+  </data>
+</root>

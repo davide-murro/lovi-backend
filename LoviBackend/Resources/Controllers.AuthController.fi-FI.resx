@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<data name="ConfirmAccountSubject" xml:space="preserve">
+    <value>Vahvista LOVI-tilisi</value>
+  </data>
+	<data name="ConfirmAccountBody" xml:space="preserve">
+    <value><![CDATA[Tervetuloa, {0}!<br/><br/>Vahvista tilisi napsauttamalla tätä linkkiä:<br/><br/><a href='{1}'>Vahvista LOVI-tili</a>]]></value>
+  </data>
+	<data name="EmailChangingSubject" xml:space="preserve">
+    <value>Sähköpostiosoitteen vaihto</value>
+  </data>
+	<data name="EmailChangingBody" xml:space="preserve">
+    <value>Sähköpostiosoitteesi LOVI:ssä on muuttumassa osoitteesta {0} osoitteeseen {1}. Jos et ole tehnyt tätä, ota yhteyttä tukeen.</value>
+  </data>
+	<data name="ConfirmNewEmailSubject" xml:space="preserve">
+    <value>Vahvista uusi sähköpostiosoitteesi</value>
+  </data>
+	<data name="ConfirmNewEmailBody" xml:space="preserve">
+    <value><![CDATA[Vahvista uusi sähköpostiosoitteesi napsauttamalla tätä:<br/><br/><a href='{0}'>Vahvista uusi sähköposti</a>]]></value>
+  </data>
+	<data name="PasswordResetSubject" xml:space="preserve">
+    <value>Salasanan nollauspyyntö</value>
+  </data>
+	<data name="PasswordResetBody" xml:space="preserve">
+    <value><![CDATA[Palauta salasanasi napsauttamalla tätä:<br/><br/><a href='{0}'>Palauta salasana</a>]]></value>
+  </data>
+	<data name="PasswordChangeSubject" xml:space="preserve">
+	<value>Salasana vaihdettu onnistuneesti</value>
+  </data>
+	<data name="PasswordChangeBody" xml:space="preserve">
+	<value><![CDATA[Tilisi salasana on päivitetty onnistuneesti. Jos et tehnyt tätä muutosta, ota välittömästi yhteyttä tukeen.]]></value>
+  </data>
+	<data name="WelcomeSubject" xml:space="preserve">
+	<value>Tervetuloa LOVI:in</value>
+  </data>
+	<data name="WelcomeBody" xml:space="preserve">
+	<value><![CDATA[Hei {0}!<br/><br/>Tilisi on luotu onnistuneesti. tervetuloa <a href="{1}">LOVI</a>.<br/><br/>Voit nyt alkaa tutkia kaikkea, mitä tarjoamme.]]></value>
+  </data>
+	<data name="EmailChangedSubject" xml:space="preserve">
+	<value>Sähköpostiosoite muutettu</value>
+  </data>
+	<data name="EmailChangedBody" xml:space="preserve">
+	<value><![CDATA[Sähköpostiosoitteesi LOVI:ssä on muuttunut osoitteesta {0} osoitteeseen {1}. Jos et ole tehnyt tätä, ota yhteys tukeen.]]></value>
+  </data>
+	<data name="PasswordResetConfirmedSubject" xml:space="preserve">
+	<value>Salasanan nollaus vahvistettu</value>
+  </data>
+	<data name="PasswordResetConfirmedBody" xml:space="preserve">
+	<value><![CDATA[Salasanasi on nollattu onnistuneesti. Voit nyt kirjautua sisään uudella salasanallasi.]]></value>
+  </data>
+	<data name="AccountDeletedSubject" xml:space="preserve">
+	<value>Tili poistettu onnistuneesti</value>
+  </data>
+	<data name="AccountDeletedBody" xml:space="preserve">
+	<value><![CDATA[Tilisi on poistettu onnistuneesti. Kiitos, että olit kanssamme.]]></value>
+  </data>
+</root>

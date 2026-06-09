@@ -13,6 +13,8 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Globalization;
+using Microsoft.Extensions.Localization;
 
 namespace LoviBackend.Controllers
 {
@@ -29,6 +31,7 @@ namespace LoviBackend.Controllers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IEmailService _emailService;
         private readonly ICookieService _cookieService;
+        private readonly IStringLocalizer<AuthController> _localizer;
 
         public AuthController(
             ApplicationDbContext context,
@@ -39,7 +42,8 @@ namespace LoviBackend.Controllers
             IWebHostEnvironment hostingEnvironment,
             IHttpClientFactory httpClientFactory,
             IEmailService emailService,
-            ICookieService cookieService
+            ICookieService cookieService,
+            IStringLocalizer<AuthController> localizer
         )
         {
             _context = context;
@@ -51,11 +55,28 @@ namespace LoviBackend.Controllers
             _httpClientFactory = httpClientFactory;
             _emailService = emailService;
             _cookieService = cookieService;
+            _localizer = localizer;
+        }
+
+        private void SetCultureFromLocale(string? localeId)
+        {
+            if (string.IsNullOrEmpty(localeId)) return;
+            try
+            {
+                var culture = new CultureInfo(localeId);
+                CultureInfo.CurrentCulture = culture;
+                CultureInfo.CurrentUICulture = culture;
+            }
+            catch
+            {
+                // ignore invalid locale
+            }
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto, [FromHeader(Name = "X-Locale")] string localeId)
         {
+            SetCultureFromLocale(localeId);
             // check user
             var userExists = await _userManager.FindByEmailAsync(dto.Email);
             if (userExists != null && !await _userManager.IsEmailConfirmedAsync(userExists))
@@ -90,18 +111,17 @@ namespace LoviBackend.Controllers
             var callbackUrl = $"{_configuration["App:BaseUrl"]}{localePath}/auth/confirm-email?userId={user.Id}&token={encodedToken}";
             await _emailService.SendEmailAsync(
                 user.Email,
-                "Confirm your LOVI account",
-                $"Welcome, {user.Name}!<br><br>" +
-                $"Please confirm your account by clicking this link:<br><br>" +
-                $"<a href='{callbackUrl}'>Confirm LOVI account</a>"
+                _localizer["ConfirmAccountSubject"],
+                string.Format(_localizer["ConfirmAccountBody"], user.Name, callbackUrl)
             );
 
             return NoContent();
         }
 
         [HttpPost("confirm-email")]
-        public async Task<IActionResult> ConfirmEmail(ConfirmEmailDto model)
+        public async Task<IActionResult> ConfirmEmail(ConfirmEmailDto model, [FromHeader(Name = "X-Locale")] string localeId)
         {
+            SetCultureFromLocale(localeId);
             if (string.IsNullOrEmpty(model.UserId) || string.IsNullOrEmpty(model.Token))
                 return BadRequest("Invalid confirmation parameters.");
 
@@ -127,12 +147,11 @@ namespace LoviBackend.Controllers
                 return BadRequest(result.Errors);
 
             // Send confirmation email
+            var callbackUrl = $"{_configuration["App:BaseUrl"]}";
             await _emailService.SendEmailAsync(
                 user.Email!,
-                "Welcome to LOVI",
-                $"Hi {user.Name}!<br><br>" +
-                $"Your account has been successfully created. welcome to <a href=\"{_configuration["App:BaseUrl"]}\">LOVI</a>.<br><br>" +
-                $"You can now start exploring everything we have to offer."
+                _localizer["WelcomeSubject"],
+                string.Format(_localizer["WelcomeBody"], user.Name, callbackUrl)
             );
 
             return NoContent();
@@ -141,6 +160,7 @@ namespace LoviBackend.Controllers
         [HttpPost("resend-confirm-email")]
         public async Task<IActionResult> ResendConfirmEmail(ResendConfirmEmailDto model, [FromHeader(Name = "X-Locale")] string localeId)
         {
+            SetCultureFromLocale(localeId);
             if (string.IsNullOrEmpty(model.Email))
                 return BadRequest("Invalid parameters.");
 
@@ -168,10 +188,8 @@ namespace LoviBackend.Controllers
             var callbackUrl = $"{_configuration["App:BaseUrl"]}{localePath}/auth/confirm-email?userId={user.Id}&token={encodedToken}";
             await _emailService.SendEmailAsync(
                 user.Email!,
-                "Confirm your LOVI account",
-                $"Welcome, {user.Name}!<br><br>" +
-                $"Please confirm your account by clicking this link:<br><br>" +
-                $"<a href='{callbackUrl}'>Confirm LOVI account</a>"
+                _localizer["ConfirmAccountSubject"],
+                string.Format(_localizer["ConfirmAccountBody"], user.Name, callbackUrl)
             );
 
             return NoContent();
@@ -267,8 +285,9 @@ namespace LoviBackend.Controllers
         }
 
         [HttpPost("external-login")]
-        public async Task<IActionResult> ExternalLogin([FromBody] ExternalLoginDto dto, [FromHeader(Name = "X-DeviceId")] string deviceId)
+        public async Task<IActionResult> ExternalLogin([FromBody] ExternalLoginDto dto, [FromHeader(Name = "X-DeviceId")] string deviceId, [FromHeader(Name = "X-Locale")] string localeId)
         {
+            SetCultureFromLocale(localeId);
             if (dto == null || string.IsNullOrEmpty(dto.Provider) || string.IsNullOrEmpty(dto.AccessToken))
                 return BadRequest("Provider and access token are required.");
 
@@ -394,12 +413,11 @@ namespace LoviBackend.Controllers
                     return BadRequest(createResult.Errors);
 
                 // Send confirmation email
+                var callbackUrl = $"{_configuration["App:BaseUrl"]}";
                 await _emailService.SendEmailAsync(
                     user.Email!,
-                    "Welcome to LOVI",
-                    $"Hi {user.Name}!<br><br>" +
-                    $"Your account has been successfully created. welcome to <a href=\"{_configuration["App:BaseUrl"]}\">LOVI</a>.<br><br>" +
-                    $"You can now start exploring everything we have to offer."
+                    _localizer["WelcomeSubject"],
+                    string.Format(_localizer["WelcomeBody"], user.Name, callbackUrl)
                 );
             } else if(!await _userManager.IsEmailConfirmedAsync(user))
             {
@@ -410,12 +428,11 @@ namespace LoviBackend.Controllers
                     return BadRequest(result.Errors);
 
                 // Send confirmation email
+                var callbackUrl = $"{_configuration["App:BaseUrl"]}";
                 await _emailService.SendEmailAsync(
                     user.Email!,
-                    "Welcome to LOVI",
-                    $"Hi {user.Name}!<br><br>" +
-                    $"Your account has been successfully created. welcome to <a href=\"{_configuration["App:BaseUrl"]}\">LOVI</a>.<br><br>" +
-                    $"You can now start exploring everything we have to offer."
+                    _localizer["WelcomeSubject"],
+                    string.Format(_localizer["WelcomeBody"], user.Name, callbackUrl)
                 );
             }
 
@@ -603,6 +620,7 @@ namespace LoviBackend.Controllers
         [Authorize]
         public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailDto model, [FromHeader(Name = "X-Locale")] string localeId)
         {
+            SetCultureFromLocale(localeId);
             var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(id)) return Unauthorized();
 
@@ -647,8 +665,8 @@ namespace LoviBackend.Controllers
             // Notify current email about change attempt
             await _emailService.SendEmailAsync(
                 currentEmail!,
-                "Email Address Changing",
-                $"Your email address on LOVI is about to change from {currentEmail} to {newEmail}. If this wasn't you, please contact support."
+                _localizer["EmailChangingSubject"],
+                string.Format(_localizer["EmailChangingBody"], currentEmail, newEmail)
             );
 
             // Send confirmation to the new email
@@ -656,9 +674,8 @@ namespace LoviBackend.Controllers
             var callbackUrl = $"{_configuration["App:BaseUrl"]}{localePath}/auth/confirm-change-email?userId={id}&newEmail={newEmail}&token={encodedToken}";
             await _emailService.SendEmailAsync(
                 newEmail,
-                "Confirm Your New Email",
-                $"Please confirm your new email address by clicking here:<br><br>" +
-                $"<a href='{callbackUrl}'>Confirm new Email</a>"
+                _localizer["ConfirmNewEmailSubject"],
+                string.Format(_localizer["ConfirmNewEmailBody"], callbackUrl)
             );
 
             return NoContent();
@@ -666,8 +683,9 @@ namespace LoviBackend.Controllers
 
         // POST: api/auth/confirm-change-email
         [HttpPost("confirm-change-email")]
-        public async Task<IActionResult> ConfirmChangeEmail(ConfirmChangeEmailDto model)
+        public async Task<IActionResult> ConfirmChangeEmail(ConfirmChangeEmailDto model, [FromHeader(Name = "X-Locale")] string localeId)
         {
+            SetCultureFromLocale(localeId);
 
             var user = await _userManager.FindByIdAsync(model.UserId);
             if (user == null)
@@ -689,13 +707,13 @@ namespace LoviBackend.Controllers
             // Notify both old and new emails about the change
             await _emailService.SendEmailAsync(
                 currentEmail,
-                "Email Address Changed",
-                $"Your email address on LOVI has been changed from {currentEmail} to {newEmail}. If this wasn't you, please contact support."
+                _localizer["EmailChangedSubject"],
+                string.Format(_localizer["EmailChangedBody"], currentEmail, newEmail)
             );
             await _emailService.SendEmailAsync(
-                newEmail,
-                "Email Address Changed",
-                $"Your email address on LOVI has been changed from {currentEmail} to {newEmail}. If this wasn't you, please contact support."
+                newEmail!,
+                _localizer["EmailChangedSubject"],
+                string.Format(_localizer["EmailChangedBody"], currentEmail, newEmail)
             );
 
             return NoContent();
@@ -704,8 +722,9 @@ namespace LoviBackend.Controllers
         // POST: api/auth/change-password
         [HttpPost("change-password")]
         [Authorize]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model)
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model, [FromHeader(Name = "X-Locale")] string localeId)
         {
+            SetCultureFromLocale(localeId);
             var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(id)) return Unauthorized();
 
@@ -731,8 +750,8 @@ namespace LoviBackend.Controllers
             // 3. Send confirmation email
             await _emailService.SendEmailAsync(
                 user.Email!,
-                "Password Changed Successfully",
-                "Your account password has been successfully updated. If you did not make this change, please contact support immediately."
+                _localizer["PasswordChangeSubject"],
+                _localizer["PasswordChangeBody"]
             );
 
             return NoContent();
@@ -743,6 +762,7 @@ namespace LoviBackend.Controllers
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model, [FromHeader(Name = "X-Locale")] string localeId)
         {
+            SetCultureFromLocale(localeId);
             var email = model.Email;
 
             if (string.IsNullOrEmpty(email))
@@ -786,9 +806,8 @@ namespace LoviBackend.Controllers
             // 4. Send the Email
             await _emailService.SendEmailAsync(
                 user.Email!,
-                "Password Reset Request",
-                $"Please reset your password by clicking here:<br><br>" +
-                $"<a href='{callbackUrl}'>Reset Password</a>"
+                _localizer["PasswordResetSubject"],
+                string.Format(_localizer["PasswordResetBody"], callbackUrl)
             );
 
             // 5. Return success (or NoContent)
@@ -797,8 +816,10 @@ namespace LoviBackend.Controllers
 
         // POST: api/auth/reset-password
         [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model, [FromHeader(Name = "X-Locale")] string localeId)
         {
+            SetCultureFromLocale(localeId);
+
             // 1. Basic input validation
             if (string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.Token) || string.IsNullOrEmpty(model.NewPassword))
             {
@@ -827,8 +848,8 @@ namespace LoviBackend.Controllers
                 // Optional: Send confirmation email
                 await _emailService.SendEmailAsync(
                     user.Email!,
-                    "Password Reset Confirmed",
-                    "Your password has been successfully reset. You can now log in with your new password."
+                _localizer["PasswordResetConfirmedSubject"],
+                _localizer["PasswordResetConfirmedBody"]
                 );
                 return NoContent();
             }
@@ -841,8 +862,10 @@ namespace LoviBackend.Controllers
         // POST: api/auth/delete-account
         [HttpPost("delete-account")]
         [Authorize]
-        public async Task<IActionResult> DeleteAccount(DeleteAccountDto model)
+        public async Task<IActionResult> DeleteAccount(DeleteAccountDto model, [FromHeader(Name = "X-Locale")] string localeId)
         {
+            SetCultureFromLocale(localeId);
+
             // 1. Get the current user's ID from the JWT claim
             var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(id)) return Unauthorized();
@@ -865,8 +888,8 @@ namespace LoviBackend.Controllers
                 // Send confirmation email
                 await _emailService.SendEmailAsync(
                     user.Email!,
-                    "Account Successfully Deleted",
-                    "Your account has been successfully deleted. Thank you for being with us."
+                    _localizer["AccountDeletedSubject"],
+                    _localizer["AccountDeletedBody"]
                 );
 
                 // Delete the refresh token cookie so browser no longer sends it

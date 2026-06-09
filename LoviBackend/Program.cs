@@ -9,8 +9,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Localization
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
 // origins
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
@@ -126,6 +130,22 @@ builder.Services
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+// Configure supported cultures for localization
+var localeNames = builder.Configuration
+    .GetSection("Locales")
+    .Get<string[]>() ?? [];
+
+var supportedCultures = localeNames
+    .Select(name => new CultureInfo(name))
+    .ToArray();
+
+var localizationOptions = new RequestLocalizationOptions()
+    .SetDefaultCulture(supportedCultures[0].Name)
+    .AddSupportedCultures(supportedCultures.Select(c => c.Name).ToArray())
+    .AddSupportedUICultures(supportedCultures.Select(c => c.Name).ToArray());
+
+app.UseRequestLocalization(localizationOptions);
 
 app.MigrateDatabase<ApplicationDbContext>();
 

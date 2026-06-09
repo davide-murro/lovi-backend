@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<data name="ConfirmAccountSubject" xml:space="preserve">
+    <value>Conferma il tuo account LOVI</value>
+  </data>
+	<data name="ConfirmAccountBody" xml:space="preserve">
+    <value><![CDATA[Benvenuto, {0}!<br/><br/>Per favore conferma il tuo account cliccando questo link:<br/><br/><a href='{1}'>Conferma account LOVI</a>]]></value>
+  </data>
+	<data name="EmailChangingSubject" xml:space="preserve">
+    <value>Cambio indirizzo email</value>
+  </data>
+	<data name="EmailChangingBody" xml:space="preserve">
+    <value><![CDATA[Il tuo indirizzo email su LOVI sta per cambiare da {0} a {1}. Se non sei stato tu, contatta il supporto.]]></value>
+  </data>
+	<data name="ConfirmNewEmailSubject" xml:space="preserve">
+    <value>Conferma la tua nuova email</value>
+  </data>
+	<data name="ConfirmNewEmailBody" xml:space="preserve">
+    <value><![CDATA[Per favore conferma il tuo nuovo indirizzo email cliccando qui:<br/><br/><a href='{0}'>Conferma nuova email</a>]]></value>
+  </data>
+	<data name="PasswordResetSubject" xml:space="preserve">
+    <value>Richiesta di reset password</value>
+  </data>
+	<data name="PasswordResetBody" xml:space="preserve">
+    <value><![CDATA[Reimposta la tua password cliccando qui:<br/><br/><a href='{0}'>Reimposta password</a>]]></value>
+  </data>
+	<data name="PasswordChangeSubject" xml:space="preserve">
+	<value>Password cambiata con successo</value>
+  </data>
+	<data name="PasswordChangeBody" xml:space="preserve">
+	<value><![CDATA[La password del tuo account è stata aggiornata con successo. Se non hai effettuato questa modifica, contatta immediatamente il supporto.]]></value>
+  </data>
+	<data name="WelcomeSubject" xml:space="preserve">
+	<value>Benvenuto su LOVI</value>
+  </data>
+	<data name="WelcomeBody" xml:space="preserve">
+	<value><![CDATA[Ciao {0}!<br/><br/>Il tuo account è stato creato con successo. benvenuto su <a href="{1}">LOVI</a>.<br/><br/>Puoi iniziare a esplorare tutto ciò che offriamo.]]></value>
+  </data>
+	<data name="EmailChangedSubject" xml:space="preserve">
+	<value>Indirizzo email cambiato</value>
+  </data>
+	<data name="EmailChangedBody" xml:space="preserve">
+	<value><![CDATA[Il tuo indirizzo email su LOVI è stato cambiato da {0} a {1}. Se non sei stato tu, contatta il supporto.]]></value>
+  </data>
+	<data name="PasswordResetConfirmedSubject" xml:space="preserve">
+	<value>Reset password confermato</value>
+  </data>
+	<data name="PasswordResetConfirmedBody" xml:space="preserve">
+	<value><![CDATA[La tua password è stata reimpostata con successo. Ora puoi accedere con la nuova password.]]></value>
+  </data>
+	<data name="AccountDeletedSubject" xml:space="preserve">
+	<value>Account eliminato con successo</value>
+  </data>
+	<data name="AccountDeletedBody" xml:space="preserve">
+	<value><![CDATA[Il tuo account è stato eliminato con successo. Grazie per essere stato con noi.]]></value>
+  </data>
+</root>

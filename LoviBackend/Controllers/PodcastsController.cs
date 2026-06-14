@@ -34,23 +34,23 @@ namespace LoviBackend.Controllers
             var podcasts = await _context.Podcasts
                 .Include(p => p.Voicers)
                     .ThenInclude(v => v.Creator)
+                .Select(podcast => new PodcastDto
+                {
+                    Id = podcast.Id,
+                    Name = podcast.Name,
+                    Description = podcast.Description,
+                    Voicers = podcast.Voicers.Select(v => new CreatorDto
+                    {
+                        Id = v.Creator.Id,
+                        Nickname = v.Creator.Nickname,
+                        Name = v.Creator.Name,
+                        Surname = v.Creator.Surname
+                    }).ToList()
+                })
+                .AsNoTracking()
                 .ToListAsync();
 
-            var podcastDtos = podcasts.Select(podcast => new PodcastDto
-            {
-                Id = podcast.Id,
-                Name = podcast.Name,
-                Description = podcast.Description,
-                Voicers = podcast.Voicers.Select(v => new CreatorDto
-                {
-                    Id = v.Creator.Id,
-                    Nickname = v.Creator.Nickname,
-                    Name = v.Creator.Name,
-                    Surname = v.Creator.Surname
-                }).ToList()
-            }).ToList();
-
-            return Ok(podcastDtos);
+            return Ok(podcasts);
         }
 
         // GET: api/podcasts/5
@@ -63,49 +63,49 @@ namespace LoviBackend.Controllers
                         .ThenInclude(v => v.Creator)
                 .Include(p => p.Voicers)
                     .ThenInclude(v => v.Creator)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (podcast == null)
-            {
-                return NotFound();
-            }
-
-            var podcastDto = new PodcastDto
-            {
-                Id = podcast.Id,
-                Name = podcast.Name,
-                Description = podcast.Description,
-                DataUrl = Url.Action(nameof(Get), "Podcasts", new { id = podcast.Id }, Request.Scheme),
-                CoverImageUrl = podcast.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = podcast.Id }, Request.Scheme) : null,
-                CoverImagePreviewUrl = podcast.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = podcast.Id, isPreview = true }, Request.Scheme) : null,
-                Episodes = podcast.Episodes.OrderBy(pe => pe.Number).Select(pe => new PodcastEpisodeDto
+                .Where(p => p.Id == id)
+                .Select(p => new PodcastDto
                 {
-                    Id = pe.Id,
-                    Number = pe.Number,
-                    Name = pe.Name,
-                    Description = pe.Description,
-                    DataUrl = Url.Action(nameof(GetEpisode), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme),
-                    CoverImageUrl = pe.CoverImagePath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
-                    CoverImagePreviewUrl = pe.CoverImagePreviewPath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id, isPreview = true }, Request.Scheme) : null,
-                    AudioUrl = pe.AudioPath != null ? Url.Action(nameof(GetEpisodeAudio), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
-                    Voicers = pe.Voicers.Select(v => new CreatorDto
+                    Id = p.Id,
+                    Name = p.Name,
+                    Description = p.Description,
+                    DataUrl = Url.Action(nameof(Get), "Podcasts", new { id = p.Id }, Request.Scheme),
+                    CoverImageUrl = p.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = p.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = p.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = p.Id, isPreview = true }, Request.Scheme) : null,
+                    Episodes = p.Episodes.OrderBy(pe => pe.Number).Select(pe => new PodcastEpisodeDto
+                    {
+                        Id = pe.Id,
+                        Number = pe.Number,
+                        Name = pe.Name,
+                        Description = pe.Description,
+                        DataUrl = Url.Action(nameof(GetEpisode), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme),
+                        CoverImageUrl = pe.CoverImagePath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
+                        CoverImagePreviewUrl = pe.CoverImagePreviewPath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id, isPreview = true }, Request.Scheme) : null,
+                        AudioUrl = pe.AudioPath != null ? Url.Action(nameof(GetEpisodeAudio), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
+                        Voicers = pe.Voicers.Select(v => new CreatorDto
+                        {
+                            Id = v.Creator.Id,
+                            Nickname = v.Creator.Nickname,
+                            Name = v.Creator.Name,
+                            Surname = v.Creator.Surname
+                        }).ToList()
+                    }).ToList(),
+                    Voicers = p.Voicers.Select(v => new CreatorDto
                     {
                         Id = v.Creator.Id,
                         Nickname = v.Creator.Nickname,
                         Name = v.Creator.Name,
                         Surname = v.Creator.Surname
-                    }).ToList()
-                }).ToList(),
-                Voicers = podcast.Voicers.Select(v => new CreatorDto
-                {
-                    Id = v.Creator.Id,
-                    Nickname = v.Creator.Nickname,
-                    Name = v.Creator.Name,
-                    Surname = v.Creator.Surname
-                }).ToList(),
-            };
+                    }).ToList(),
+                })
+                .AsSplitQuery()
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
 
-            return Ok(podcastDto);
+            if (podcast == null)
+                return NotFound();
+
+            return Ok(podcast);
         }
 
         // PUT: api/podcasts/5
@@ -276,7 +276,9 @@ namespace LoviBackend.Controllers
         [HttpGet("exists/{id}")]
         public async Task<IActionResult> Exists(int id)
         {
-            var podcastExists = await _context.Podcasts.AnyAsync(e => e.Id == id);
+            var podcastExists = await _context.Podcasts
+                .AsNoTracking()
+                .AnyAsync(p => p.Id == id);
 
             if (podcastExists)
             {
@@ -355,9 +357,11 @@ namespace LoviBackend.Controllers
 
         // GET: api/podcasts/5/cover
         [HttpGet("{id}/cover")]
-        public IActionResult GetCoverImage(int id, bool? isPreview)
+        public async Task<IActionResult> GetCoverImage(int id, bool? isPreview)
         {
-            var podcast = _context.Podcasts.Find(id);
+            var podcast = await _context.Podcasts
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == id);
             if (podcast == null)
                 return NotFound();
 
@@ -419,46 +423,50 @@ namespace LoviBackend.Controllers
                 .Include(pe => pe.Podcast)
                 .Include(pe => pe.Voicers)
                     .ThenInclude(v => v.Creator)
-                .FirstOrDefaultAsync(p => p.PodcastId == id && p.Id == episodeId);
+                .Where(pe => pe.PodcastId == id && pe.Id == episodeId)
+                .Select(pe => new PodcastEpisodeDto
+                    {
+                        Id = pe.Id,
+                        Number = pe.Number,
+                        Name = pe.Name,
+                        Description = pe.Description,
+                        DataUrl = Url.Action(nameof(GetEpisode), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme),
+                        CoverImageUrl = pe.CoverImagePath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
+                        CoverImagePreviewUrl = pe.CoverImagePreviewPath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id, isPreview = true }, Request.Scheme) : null,
+                        AudioUrl = pe.AudioPath != null ? Url.Action(nameof(GetEpisodeAudio), "Podcasts", new { id = pe.PodcastId, episodeId = pe.Id }, Request.Scheme) : null,
+                        Podcast = new PodcastDto
+                        {
+                            Id = pe.Podcast.Id,
+                            Name = pe.Podcast.Name,
+                            Description = pe.Podcast.Description,
+                            DataUrl = Url.Action(nameof(Get), "Podcasts", new { id = pe.Podcast.Id }, Request.Scheme),
+                            CoverImageUrl = pe.Podcast.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = pe.Podcast.Id }, Request.Scheme) : null,
+                            CoverImagePreviewUrl = pe.Podcast.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = pe.Podcast.Id, isPreview = true }, Request.Scheme) : null,
+                        },
+                        Voicers = pe.Voicers.Select(v => new CreatorDto
+                        {
+                            Id = v.Creator.Id,
+                            Nickname = v.Creator.Nickname,
+                            Name = v.Creator.Name,
+                            Surname = v.Creator.Surname
+                        }).ToList()
+                    })
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
             if (podcastEpisode == null)
                 return NotFound();
 
-            var podcastEpisodeDto = new PodcastEpisodeDto
-            {
-                Id = podcastEpisode.Id,
-                Number = podcastEpisode.Number,
-                Name = podcastEpisode.Name,
-                Description = podcastEpisode.Description,
-                DataUrl = Url.Action(nameof(GetEpisode), "Podcasts", new { id = podcastEpisode.PodcastId, episodeId = podcastEpisode.Id }, Request.Scheme),
-                CoverImageUrl = podcastEpisode.CoverImagePath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = podcastEpisode.PodcastId, episodeId = podcastEpisode.Id }, Request.Scheme) : null,
-                CoverImagePreviewUrl = podcastEpisode.CoverImagePreviewPath != null ? Url.Action(nameof(GetEpisodeCoverImage), "Podcasts", new { id = podcastEpisode.PodcastId, episodeId = podcastEpisode.Id, isPreview = true }, Request.Scheme) : null,
-                AudioUrl = podcastEpisode.AudioPath != null ? Url.Action(nameof(GetEpisodeAudio), "Podcasts", new { id = podcastEpisode.PodcastId, episodeId = podcastEpisode.Id }, Request.Scheme) : null,
-                Podcast = new PodcastDto
-                {
-                    Id = podcastEpisode.Podcast.Id,
-                    Name = podcastEpisode.Podcast.Name,
-                    Description = podcastEpisode.Podcast.Description,
-                    DataUrl = Url.Action(nameof(Get), "Podcasts", new { id = podcastEpisode.Podcast.Id }, Request.Scheme),
-                    CoverImageUrl = podcastEpisode.Podcast.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = podcastEpisode.Podcast.Id }, Request.Scheme) : null,
-                    CoverImagePreviewUrl = podcastEpisode.Podcast.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "Podcasts", new { id = podcastEpisode.Podcast.Id, isPreview = true }, Request.Scheme) : null,
-                },
-                Voicers = podcastEpisode.Voicers.Select(v => new CreatorDto
-                {
-                    Id = v.Creator.Id,
-                    Nickname = v.Creator.Nickname,
-                    Name = v.Creator.Name,
-                    Surname = v.Creator.Surname
-                }).ToList()
-            };
-
-            return Ok(podcastEpisodeDto);
+            return Ok(podcastEpisode);
         }
 
         // GET: api/podcasts/5/episodes/1/cover
         [HttpGet("{id}/episodes/{episodeId}/cover")]
-        public IActionResult GetEpisodeCoverImage(int id, int episodeId, bool? isPreview)
+        public async Task<IActionResult> GetEpisodeCoverImage(int id, int episodeId, bool? isPreview)
         {
-            var podcastEpisode = _context.PodcastEpisodes.FirstOrDefault((pe) => pe.PodcastId == id && pe.Id == episodeId);
+            var podcastEpisode = await _context.PodcastEpisodes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(pe => pe.PodcastId == id && pe.Id == episodeId);
             if (podcastEpisode == null)
                 return NotFound();
 
@@ -482,9 +490,11 @@ namespace LoviBackend.Controllers
 
         // GET: api/podcasts/5/episodes/1/audio
         [HttpGet("{id}/episodes/{episodeId}/audio")]
-        public IActionResult GetEpisodeAudio(int id, int episodeId)
+        public async Task<IActionResult> GetEpisodeAudio(int id, int episodeId)
         {
-            var podcastEpisode = _context.PodcastEpisodes.FirstOrDefault((pe) => pe.PodcastId == id && pe.Id == episodeId);
+            var podcastEpisode = await _context.PodcastEpisodes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(pe => pe.PodcastId == id && pe.Id == episodeId);
             if (podcastEpisode == null || string.IsNullOrEmpty(podcastEpisode.AudioPath))
                 return NotFound();
 
@@ -718,7 +728,9 @@ namespace LoviBackend.Controllers
         [HttpGet("{id}/episodes/{episodeId}/exists/")]
         public async Task<IActionResult> EpisodeExists(int id, int episodeId)
         {
-            var podcastEpisodeExists = await _context.PodcastEpisodes.AnyAsync(pe => pe.PodcastId == id && pe.Id == episodeId);
+            var podcastEpisodeExists = await _context.PodcastEpisodes
+                .AsNoTracking()
+                .AnyAsync(pe => pe.PodcastId == id && pe.Id == episodeId);
 
             if (podcastEpisodeExists)
             {

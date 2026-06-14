@@ -31,68 +31,72 @@ namespace LoviBackend.Controllers
             var books = await _context.Books
                 .Include(b => b.Readers).ThenInclude(r => r.Creator)
                 .Include(b => b.Writers).ThenInclude(w => w.Creator)
+                .Select(b => new BookDto
+                {
+                    Id = b.Id,
+                    Name = b.Name,
+                    Description = b.Description,
+                    Readers = b.Readers.Select(r => new CreatorDto
+                    {
+                        Id = r.Creator.Id,
+                        Nickname = r.Creator.Nickname,
+                        Name = r.Creator.Name,
+                        Surname = r.Creator.Surname
+                    }).ToList(),
+                    Writers = b.Writers.Select(w => new CreatorDto
+                    {
+                        Id = w.Creator.Id,
+                        Nickname = w.Creator.Nickname,
+                        Name = w.Creator.Name,
+                        Surname = w.Creator.Surname
+                    }).ToList()
+                })
+                .AsNoTracking()
                 .ToListAsync();
 
-            var dtos = books.Select(b => new BookDto
-            {
-                Id = b.Id,
-                Name = b.Name,
-                Description = b.Description,
-                Readers = b.Readers.Select(r => new CreatorDto
-                {
-                    Id = r.Creator.Id,
-                    Nickname = r.Creator.Nickname,
-                    Name = r.Creator.Name,
-                    Surname = r.Creator.Surname
-                }).ToList(),
-                Writers = b.Writers.Select(w => new CreatorDto
-                {
-                    Id = w.Creator.Id,
-                    Nickname = w.Creator.Nickname,
-                    Name = w.Creator.Name,
-                    Surname = w.Creator.Surname
-                }).ToList()
-            }).ToList();
-
-            return Ok(dtos);
+            return Ok(books);
         }
 
         // GET: api/books/5
         [HttpGet("{id}")]
         public async Task<ActionResult<BookDto>> Get(int id)
         {
-            var b = await _context.Books
-                .Include(bk => bk.Readers).ThenInclude(r => r.Creator)
-                .Include(bk => bk.Writers).ThenInclude(w => w.Creator)
-                .FirstOrDefaultAsync(bk => bk.Id == id);
-            if (b == null) return NotFound();
+            var book = await _context.Books
+                .Include(b => b.Readers).ThenInclude(r => r.Creator)
+                .Include(b => b.Writers).ThenInclude(w => w.Creator)
+                .Where(b => b.Id == id)
+                .Select(b => new BookDto
+                {
+                    Id = b.Id,
+                    Name = b.Name,
+                    Description = b.Description,
+                    DataUrl = Url.Action(nameof(Get), "Books", new { id = b.Id }, Request.Scheme),
+                    CoverImageUrl = b.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "Books", new { id = b.Id }, Request.Scheme) : null,
+                    CoverImagePreviewUrl = b.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "Books", new { id = b.Id, isPreview = true }, Request.Scheme) : null,
+                    AudioUrl = b.AudioPath != null ? Url.Action(nameof(GetAudio), "Books", new { id = b.Id }, Request.Scheme) : null,
+                    FileUrl = b.FilePath != null ? Url.Action(nameof(GetFile), "Books", new { id = b.Id }, Request.Scheme) : null,
+                    Readers = b.Readers.Select(r => new CreatorDto
+                    {
+                        Id = r.Creator.Id,
+                        Nickname = r.Creator.Nickname,
+                        Name = r.Creator.Name,
+                        Surname = r.Creator.Surname
+                    }).ToList(),
+                    Writers = b.Writers.Select(w => new CreatorDto
+                    {
+                        Id = w.Creator.Id,
+                        Nickname = w.Creator.Nickname,
+                        Name = w.Creator.Name,
+                        Surname = w.Creator.Surname
+                    }).ToList()
+                })
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
 
-            var dto = new BookDto
-            {
-                Id = b.Id,
-                Name = b.Name,
-                Description = b.Description,
-                DataUrl = Url.Action(nameof(Get), "Books", new { id = b.Id }, Request.Scheme),
-                CoverImageUrl = b.CoverImagePath != null ? Url.Action(nameof(GetCoverImage), "Books", new { id = b.Id }, Request.Scheme) : null,
-                CoverImagePreviewUrl = b.CoverImagePreviewPath != null ? Url.Action(nameof(GetCoverImage), "Books", new { id = b.Id, isPreview = true }, Request.Scheme) : null,
-                AudioUrl = b.AudioPath != null ? Url.Action(nameof(GetAudio), "Books", new { id = b.Id }, Request.Scheme) : null,
-                FileUrl = b.FilePath != null ? Url.Action(nameof(GetFile), "Books", new { id = b.Id }, Request.Scheme) : null,
-                Readers = b.Readers.Select(r => new CreatorDto
-                {
-                    Id = r.Creator.Id,
-                    Nickname = r.Creator.Nickname,
-                    Name = r.Creator.Name,
-                    Surname = r.Creator.Surname
-                }).ToList(),
-                Writers = b.Writers.Select(w => new CreatorDto
-                {
-                    Id = w.Creator.Id,
-                    Nickname = w.Creator.Nickname,
-                    Name = w.Creator.Name,
-                    Surname = w.Creator.Surname
-                }).ToList()
-            };
-            return Ok(dto);
+            if (book == null)
+                return NotFound();
+
+            return Ok(book);
         }
 
         // GET: api/books/paged
@@ -112,7 +116,7 @@ namespace LoviBackend.Controllers
                 booksQuery = booksQuery.Where(b =>
                     EF.Functions.Like(b.Name, $"%{search}%") ||
                     (b.Description != null && EF.Functions.Like(b.Description, $"%{search}%")) ||
-                    b.Readers.Any(r => 
+                    b.Readers.Any(r =>
                         EF.Functions.Like(r.Creator.Nickname, $"%{search}%") ||
                         (r.Creator.Name != null && EF.Functions.Like(r.Creator.Name, $"%{search}%")) ||
                         (r.Creator.Surname != null && EF.Functions.Like(r.Creator.Surname, $"%{search}%"))
@@ -177,9 +181,11 @@ namespace LoviBackend.Controllers
 
         // GET: api/books/{id}/cover
         [HttpGet("{id}/cover")]
-        public IActionResult GetCoverImage(int id, bool? isPreview)
+        public async Task<IActionResult> GetCoverImage(int id, bool? isPreview)
         {
-            var book = _context.Books.Find(id);
+            var book = await _context.Books
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == id);
             if (book == null) return NotFound();
 
             var path = isPreview == true ? book.CoverImagePreviewPath : book.CoverImagePath;
@@ -195,9 +201,11 @@ namespace LoviBackend.Controllers
 
         // GET: api/books/{id}/audio
         [HttpGet("{id}/audio")]
-        public IActionResult GetAudio(int id)
+        public async Task<IActionResult> GetAudio(int id)
         {
-            var book = _context.Books.Find(id);
+            var book = await _context.Books
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == id);
             if (book == null || string.IsNullOrEmpty(book.AudioPath)) return NotFound();
 
             var filePath = Path.Combine(_hostingEnvironment.ContentRootPath, _configuration["UploadsPath"]!, book.AudioPath);
@@ -210,9 +218,11 @@ namespace LoviBackend.Controllers
 
         // GET: api/books/{id}/file
         [HttpGet("{id}/file")]
-        public IActionResult GetFile(int id)
+        public async Task<IActionResult> GetFile(int id)
         {
-            var book = _context.Books.Find(id);
+            var book = await _context.Books
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == id);
             if (book == null || string.IsNullOrEmpty(book.FilePath)) return NotFound();
 
             var filePath = Path.Combine(_hostingEnvironment.ContentRootPath, _configuration["UploadsPath"]!, book.FilePath);
@@ -378,7 +388,7 @@ namespace LoviBackend.Controllers
             var uploadPath = Path.Combine(_hostingEnvironment.ContentRootPath, _configuration["UploadsPath"]!);
             var bookPath = Path.Combine("books", book.Id.ToString());
             if (Directory.Exists(Path.Combine(uploadPath, bookPath))) Directory.Delete(Path.Combine(uploadPath, bookPath), true);
-            
+
             return NoContent();
         }
 
@@ -386,7 +396,9 @@ namespace LoviBackend.Controllers
         [HttpGet("exists/{id}")]
         public async Task<IActionResult> Exists(int id)
         {
-            var exists = await _context.Books.AnyAsync(b => b.Id == id);
+            var exists = await _context.Books
+                .AsNoTracking()
+                .AnyAsync(b => b.Id == id);
             if (exists) return Ok(true);
             return NotFound(false);
         }

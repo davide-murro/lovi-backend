@@ -39,77 +39,78 @@ namespace LoviBackend.Controllers
                     .ThenInclude(b => b!.Writers)
                         .ThenInclude(w => w.Creator)
                 .OrderByDescending(l => l.Id)
+                .Select(l => new LibraryDto
+                {
+                    Id = l.Id,
+                    User = new UserProfileDto
+                    {
+                        Id = l.User.Id,
+                        Name = l.User.Name
+                    },
+                    Podcast = l.Podcast != null ? new PodcastDto
+                    {
+                        Id = l.Podcast.Id,
+                        Name = l.Podcast.Name,
+                        DataUrl = Url.Action(nameof(PodcastsController.Get), "Podcasts", new { id = l.Podcast.Id }, Request.Scheme),
+                        CoverImageUrl = l.Podcast.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetCoverImage), "Podcasts", new { id = l.Podcast.Id }, Request.Scheme) : null,
+                        CoverImagePreviewUrl = l.Podcast.CoverImagePreviewPath != null ? Url.Action(nameof(PodcastsController.GetCoverImage), "Podcasts", new { id = l.Podcast.Id, isPreview = true }, Request.Scheme) : null,
+                        Description = l.Podcast.Description,
+                        Voicers = l.Podcast.Voicers.Select(v => new CreatorDto
+                        {
+                            Id = v.Creator.Id,
+                            Nickname = v.Creator.Nickname,
+                            Name = v.Creator.Name,
+                            Surname = v.Creator.Surname
+                        }).ToList()
+                    } : null,
+                    PodcastEpisode = l.PodcastEpisode != null ? new PodcastEpisodeDto
+                    {
+                        Id = l.PodcastEpisode.Id,
+                        Number = l.PodcastEpisode.Number,
+                        Name = l.PodcastEpisode.Name,
+                        DataUrl = Url.Action(nameof(PodcastsController.GetEpisode), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme),
+                        CoverImageUrl = l.PodcastEpisode.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetEpisodeCoverImage), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme) : null,
+                        CoverImagePreviewUrl = l.PodcastEpisode.CoverImagePreviewPath != null ? Url.Action(nameof(PodcastsController.GetEpisodeCoverImage), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id, isPreview = true }, Request.Scheme) : null,
+                        Description = l.PodcastEpisode.Description,
+                        Voicers = l.PodcastEpisode.Voicers.Select(v => new CreatorDto
+                        {
+                            Id = v.Creator.Id,
+                            Nickname = v.Creator.Nickname,
+                            Name = v.Creator.Name,
+                            Surname = v.Creator.Surname
+                        }).ToList()
+                    } : null,
+                    Book = l.Book != null ? new BookDto
+                    {
+                        Id = l.Book.Id,
+                        Name = l.Book.Name,
+                        DataUrl = Url.Action(nameof(BooksController.Get), "Books", new { id = l.Book.Id }, Request.Scheme),
+                        CoverImageUrl = l.Book.CoverImagePath != null ? Url.Action(nameof(BooksController.GetCoverImage), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
+                        CoverImagePreviewUrl = l.Book.CoverImagePreviewPath != null ? Url.Action(nameof(BooksController.GetCoverImage), "Books", new { id = l.Book.Id, isPreview = true }, Request.Scheme) : null,
+                        Description = l.Book.Description,
+                        AudioUrl = l.Book.AudioPath != null ? Url.Action(nameof(BooksController.GetAudio), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
+                        FileUrl = l.Book.FilePath != null ? Url.Action(nameof(BooksController.GetFile), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
+                        Readers = l.Book.Readers.Select(r => new CreatorDto
+                        {
+                            Id = r.Creator.Id,
+                            Nickname = r.Creator.Nickname,
+                            Name = r.Creator.Name,
+                            Surname = r.Creator.Surname
+                        }).ToList(),
+                        Writers = l.Book.Writers.Select(w => new CreatorDto
+                        {
+                            Id = w.Creator.Id,
+                            Nickname = w.Creator.Nickname,
+                            Name = w.Creator.Name,
+                            Surname = w.Creator.Surname
+                        }).ToList()
+                    } : null
+                })
+                .AsSplitQuery()
+                .AsNoTracking()
                 .ToListAsync();
 
-            var libraryDtos = libraries.Select(l => new LibraryDto
-            {
-                Id = l.Id,
-                User = new UserProfileDto
-                {
-                    Id = l.User.Id,
-                    Name = l.User.Name
-                },
-                Podcast = l.Podcast != null ? new PodcastDto
-                {
-                    Id = l.Podcast.Id,
-                    Name = l.Podcast.Name,
-                    DataUrl = Url.Action(nameof(PodcastsController.Get), "Podcasts", new { id = l.Podcast.Id }, Request.Scheme),
-                    CoverImageUrl = l.Podcast.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetCoverImage), "Podcasts", new { id = l.Podcast.Id }, Request.Scheme) : null,
-                    CoverImagePreviewUrl = l.Podcast.CoverImagePreviewPath != null ? Url.Action(nameof(PodcastsController.GetCoverImage), "Podcasts", new { id = l.Podcast.Id, isPreview = true }, Request.Scheme) : null,
-                    Description = l.Podcast.Description,
-                    Voicers = l.Podcast.Voicers.Select(v => new CreatorDto
-                    {
-                        Id = v.Creator.Id,
-                        Nickname = v.Creator.Nickname,
-                        Name = v.Creator.Name,
-                        Surname = v.Creator.Surname
-                    }).ToList()
-                } : null,
-                PodcastEpisode = l.PodcastEpisode != null ? new PodcastEpisodeDto
-                {
-                    Id = l.PodcastEpisode.Id,
-                    Number = l.PodcastEpisode.Number,
-                    Name = l.PodcastEpisode.Name,
-                    DataUrl = Url.Action(nameof(PodcastsController.GetEpisode), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme),
-                    CoverImageUrl = l.PodcastEpisode.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetEpisodeCoverImage), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme) : null,
-                    CoverImagePreviewUrl = l.PodcastEpisode.CoverImagePreviewPath != null ? Url.Action(nameof(PodcastsController.GetEpisodeCoverImage), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id, isPreview = true }, Request.Scheme) : null,
-                    Description = l.PodcastEpisode.Description,
-                    Voicers = l.PodcastEpisode.Voicers.Select(v => new CreatorDto
-                    {
-                        Id = v.Creator.Id,
-                        Nickname = v.Creator.Nickname,
-                        Name = v.Creator.Name,
-                        Surname = v.Creator.Surname
-                    }).ToList()
-                } : null,
-                Book = l.Book != null ? new BookDto
-                {
-                    Id = l.Book.Id,
-                    Name = l.Book.Name,
-                    DataUrl = Url.Action(nameof(BooksController.Get), "Books", new { id = l.Book.Id }, Request.Scheme),
-                    CoverImageUrl = l.Book.CoverImagePath != null ? Url.Action(nameof(BooksController.GetCoverImage), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
-                    CoverImagePreviewUrl = l.Book.CoverImagePreviewPath != null ? Url.Action(nameof(BooksController.GetCoverImage), "Books", new { id = l.Book.Id, isPreview = true }, Request.Scheme) : null,
-                    Description = l.Book.Description,
-                    AudioUrl = l.Book.AudioPath != null ? Url.Action(nameof(BooksController.GetAudio), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
-                    FileUrl = l.Book.FilePath != null ? Url.Action(nameof(BooksController.GetFile), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
-                    Readers = l.Book.Readers.Select(r => new CreatorDto
-                    {
-                        Id = r.Creator.Id,
-                        Nickname = r.Creator.Nickname,
-                        Name = r.Creator.Name,
-                        Surname = r.Creator.Surname
-                    }).ToList(),
-                    Writers = l.Book.Writers.Select(w => new CreatorDto
-                    {
-                        Id = w.Creator.Id,
-                        Nickname = w.Creator.Nickname,
-                        Name = w.Creator.Name,
-                        Surname = w.Creator.Surname
-                    }).ToList()
-                } : null
-            }).ToList();
-
-            return Ok(libraryDtos);
+            return Ok(libraries);
         }
 
         // GET: api/libraries/me
@@ -140,78 +141,79 @@ namespace LoviBackend.Controllers
                         .ThenInclude(w => w.Creator)
                 .Where(l => l.UserId == userId)
                 .OrderByDescending(l => l.Id)
+                .Select(l => new LibraryDto
+                {
+                    Id = l.Id,
+                    User = new UserProfileDto
+                    {
+                        Id = l.User.Id,
+                        Name = l.User.Name
+                    },
+                    Podcast = l.Podcast != null ? new PodcastDto
+                    {
+                        Id = l.Podcast.Id,
+                        Name = l.Podcast.Name,
+                        DataUrl = Url.Action(nameof(PodcastsController.Get), "Podcasts", new { id = l.Podcast.Id }, Request.Scheme),
+                        CoverImageUrl = l.Podcast.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetCoverImage), "Podcasts", new { id = l.Podcast.Id }, Request.Scheme) : null,
+                        CoverImagePreviewUrl = l.Podcast.CoverImagePreviewPath != null ? Url.Action(nameof(PodcastsController.GetCoverImage), "Podcasts", new { id = l.Podcast.Id, isPreview = true }, Request.Scheme) : null,
+                        Description = l.Podcast.Description,
+                        Voicers = l.Podcast.Voicers.Select(v => new CreatorDto
+                        {
+                            Id = v.Creator.Id,
+                            Nickname = v.Creator.Nickname,
+                            Name = v.Creator.Name,
+                            Surname = v.Creator.Surname
+                        }).ToList()
+                    } : null,
+                    PodcastEpisode = l.PodcastEpisode != null ? new PodcastEpisodeDto
+                    {
+                        Id = l.PodcastEpisode.Id,
+                        Number = l.PodcastEpisode.Number,
+                        Name = l.PodcastEpisode.Name,
+                        DataUrl = Url.Action(nameof(PodcastsController.GetEpisode), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme),
+                        CoverImageUrl = l.PodcastEpisode.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetEpisodeCoverImage), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme) : null,
+                        CoverImagePreviewUrl = l.PodcastEpisode.CoverImagePreviewPath != null ? Url.Action(nameof(PodcastsController.GetEpisodeCoverImage), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id, isPreview = true }, Request.Scheme) : null,
+                        Description = l.PodcastEpisode.Description,
+                        AudioUrl = l.PodcastEpisode.AudioPath != null ? Url.Action(nameof(PodcastsController.GetEpisodeAudio), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme) : null,
+                        Voicers = l.PodcastEpisode.Voicers.Select(v => new CreatorDto
+                        {
+                            Id = v.Creator.Id,
+                            Nickname = v.Creator.Nickname,
+                            Name = v.Creator.Name,
+                            Surname = v.Creator.Surname
+                        }).ToList()
+                    } : null,
+                    Book = l.Book != null ? new BookDto
+                    {
+                        Id = l.Book.Id,
+                        Name = l.Book.Name,
+                        DataUrl = Url.Action("Get", "Books", new { id = l.Book.Id }, Request.Scheme),
+                        CoverImageUrl = l.Book.CoverImagePath != null ? Url.Action(nameof(BooksController.GetCoverImage), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
+                        CoverImagePreviewUrl = l.Book.CoverImagePreviewPath != null ? Url.Action(nameof(BooksController.GetCoverImage), "Books", new { id = l.Book.Id, isPreview = true }, Request.Scheme) : null,
+                        Description = l.Book.Description,
+                        AudioUrl = l.Book.AudioPath != null ? Url.Action(nameof(BooksController.GetAudio), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
+                        FileUrl = l.Book.FilePath != null ? Url.Action(nameof(BooksController.GetFile), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
+                        Readers = l.Book.Readers.Select(r => new CreatorDto
+                        {
+                            Id = r.Creator.Id,
+                            Nickname = r.Creator.Nickname,
+                            Name = r.Creator.Name,
+                            Surname = r.Creator.Surname
+                        }).ToList(),
+                        Writers = l.Book.Writers.Select(w => new CreatorDto
+                        {
+                            Id = w.Creator.Id,
+                            Nickname = w.Creator.Nickname,
+                            Name = w.Creator.Name,
+                            Surname = w.Creator.Surname
+                        }).ToList()
+                    } : null
+                })
+                .AsSplitQuery()
+                .AsNoTracking()
                 .ToListAsync();
 
-            var libraryDtos = libraries.Select(l => new LibraryDto
-            {
-                Id = l.Id,
-                User = new UserProfileDto
-                {
-                    Id = l.User.Id,
-                    Name = l.User.Name
-                },
-                Podcast = l.Podcast != null ? new PodcastDto
-                {
-                    Id = l.Podcast.Id,
-                    Name = l.Podcast.Name,
-                    DataUrl = Url.Action(nameof(PodcastsController.Get), "Podcasts", new { id = l.Podcast.Id }, Request.Scheme),
-                    CoverImageUrl = l.Podcast.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetCoverImage), "Podcasts", new { id = l.Podcast.Id }, Request.Scheme) : null,
-                    CoverImagePreviewUrl = l.Podcast.CoverImagePreviewPath != null ? Url.Action(nameof(PodcastsController.GetCoverImage), "Podcasts", new { id = l.Podcast.Id, isPreview = true }, Request.Scheme) : null,
-                    Description = l.Podcast.Description,
-                    Voicers = l.Podcast.Voicers.Select(v => new CreatorDto
-                    {
-                        Id = v.Creator.Id,
-                        Nickname = v.Creator.Nickname,
-                        Name = v.Creator.Name,
-                        Surname = v.Creator.Surname
-                    }).ToList()
-                } : null,
-                PodcastEpisode = l.PodcastEpisode != null ? new PodcastEpisodeDto
-                {
-                    Id = l.PodcastEpisode.Id,
-                    Number = l.PodcastEpisode.Number,
-                    Name = l.PodcastEpisode.Name,
-                    DataUrl = Url.Action(nameof(PodcastsController.GetEpisode), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme),
-                    CoverImageUrl = l.PodcastEpisode.CoverImagePath != null ? Url.Action(nameof(PodcastsController.GetEpisodeCoverImage), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme) : null,
-                    CoverImagePreviewUrl = l.PodcastEpisode.CoverImagePreviewPath != null ? Url.Action(nameof(PodcastsController.GetEpisodeCoverImage), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id, isPreview = true }, Request.Scheme) : null,
-                    Description = l.PodcastEpisode.Description,
-                    AudioUrl = l.PodcastEpisode.AudioPath != null ? Url.Action(nameof(PodcastsController.GetEpisodeAudio), "Podcasts", new { id = l.PodcastEpisode.PodcastId, episodeId = l.PodcastEpisode.Id }, Request.Scheme) : null,
-                    Voicers = l.PodcastEpisode.Voicers.Select(v => new CreatorDto
-                    {
-                        Id = v.Creator.Id,
-                        Nickname = v.Creator.Nickname,
-                        Name = v.Creator.Name,
-                        Surname = v.Creator.Surname
-                    }).ToList()
-                } : null,
-                Book = l.Book != null ? new BookDto
-                {
-                    Id = l.Book.Id,
-                    Name = l.Book.Name,
-                    DataUrl = Url.Action("Get", "Books", new { id = l.Book.Id }, Request.Scheme),
-                    CoverImageUrl = l.Book.CoverImagePath != null ? Url.Action(nameof(BooksController.GetCoverImage), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
-                    CoverImagePreviewUrl = l.Book.CoverImagePreviewPath != null ? Url.Action(nameof(BooksController.GetCoverImage), "Books", new { id = l.Book.Id, isPreview = true }, Request.Scheme) : null,
-                    Description = l.Book.Description,
-                    AudioUrl = l.Book.AudioPath != null ? Url.Action(nameof(BooksController.GetAudio), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
-                    FileUrl = l.Book.FilePath != null ? Url.Action(nameof(BooksController.GetFile), "Books", new { id = l.Book.Id }, Request.Scheme) : null,
-                    Readers = l.Book.Readers.Select(r => new CreatorDto
-                    {
-                        Id = r.Creator.Id,
-                        Nickname = r.Creator.Nickname,
-                        Name = r.Creator.Name,
-                        Surname = r.Creator.Surname
-                    }).ToList(),
-                    Writers = l.Book.Writers.Select(w => new CreatorDto
-                    {
-                        Id = w.Creator.Id,
-                        Nickname = w.Creator.Nickname,
-                        Name = w.Creator.Name,
-                        Surname = w.Creator.Surname
-                    }).ToList()
-                } : null
-            }).ToList();
-
-            return Ok(libraryDtos);
+            return Ok(libraries);
         }
 
         // POST: api/libraries/me

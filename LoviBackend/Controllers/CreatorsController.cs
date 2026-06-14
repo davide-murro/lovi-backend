@@ -24,39 +24,42 @@ namespace LoviBackend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CreatorDto>>> Get()
         {
-            var creators = await _context.Creators.ToListAsync();
+            var creators = await _context.Creators
+                .Select(creator => new CreatorDto
+                {
+                    Id = creator.Id,
+                    Nickname = creator.Nickname,
+                    Name = creator.Name,
+                    Surname = creator.Surname,
+                })
+                .AsNoTracking()
+                .ToListAsync();
 
-            var creatorDtos = creators.Select(creator => new CreatorDto
-            {
-                Id = creator.Id,
-                Nickname = creator.Nickname,
-                Name = creator.Name,
-                Surname = creator.Surname,
-            }).ToList();
-
-            return Ok(creatorDtos);
+            return Ok(creators);
         }
 
         // GET: api/creators/5
         [HttpGet("{id}")]
         public async Task<ActionResult<CreatorDto>> Get(int id)
         {
-            var creator = await _context.Creators.FindAsync(id);
+            var creator = await _context.Creators
+                .Where(c => c.Id == id)
+                .Select(c => new CreatorDto
+                {
+                    Id = c.Id,
+                    Nickname = c.Nickname,
+                    Name = c.Name,
+                    Surname = c.Surname
+                })
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
 
             if (creator == null)
             {
                 return NotFound();
             }
 
-            var creatorDto = new CreatorDto
-            {
-                Id = creator.Id,
-                Nickname = creator.Nickname,
-                Name = creator.Name,
-                Surname = creator.Surname
-            };
-
-            return creatorDto;
+            return creator;
         }
 
         // PUT: api/creators/5
@@ -130,7 +133,9 @@ namespace LoviBackend.Controllers
         [HttpGet("exists/{id}")]
         public async Task<IActionResult> Exists(int id)
         {
-            var creatorExists = await _context.Creators.AnyAsync(e => e.Id == id);
+            var creatorExists = await _context.Creators
+                .AsNoTracking()
+                .AnyAsync(e => e.Id == id);
 
             if (creatorExists)
             {

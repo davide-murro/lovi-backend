@@ -31,6 +31,7 @@ namespace LoviBackend.Controllers
             var books = await _context.Books
                 .Include(b => b.Readers).ThenInclude(r => r.Creator)
                 .Include(b => b.Writers).ThenInclude(w => w.Creator)
+                .AsSplitQuery()
                 .Select(b => new BookDto
                 {
                     Id = b.Id,
@@ -64,6 +65,7 @@ namespace LoviBackend.Controllers
             var book = await _context.Books
                 .Include(b => b.Readers).ThenInclude(r => r.Creator)
                 .Include(b => b.Writers).ThenInclude(w => w.Creator)
+                .AsSplitQuery()
                 .Where(b => b.Id == id)
                 .Select(b => new BookDto
                 {
@@ -107,6 +109,7 @@ namespace LoviBackend.Controllers
             var booksQuery = _context.Books
                 .Include(b => b.Readers).ThenInclude(r => r.Creator)
                 .Include(b => b.Writers).ThenInclude(w => w.Creator)
+                .AsSplitQuery()
                 .AsNoTracking();
 
             // Apply search filter
